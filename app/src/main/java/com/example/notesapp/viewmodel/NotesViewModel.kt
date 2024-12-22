@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import com.example.notesapp.model.Note
 import com.example.notesapp.data.NoteRepository
 import com.example.notesapp.data.YouNoteDatabase
+import kotlinx.coroutines.flow.collect
 
 class NotesViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -20,11 +21,19 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
     private val _textInput = MutableStateFlow("")
     val textInput: StateFlow<String> = _textInput
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+
     private val _notes = MutableStateFlow<List<Note>>(emptyList())
     val notes: StateFlow<List<Note>> = _notes
 
     init {
         getAllNotes()
+    }
+
+    fun onSearchQueryChanged(newQuery: String) {
+        _searchQuery.value = newQuery
+        getFilteredNotes()
     }
 
     fun onTextChanged(newText: String) {
@@ -44,7 +53,7 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
             viewModelScope.launch {
                 repository.insert(newNote)
                 // After adding the note, refresh the list of notes
-                getAllNotes()
+                getFilteredNotes()
             }
             _textInput.value = "" // Clear input field
         }
@@ -54,6 +63,17 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
         // Fetch all notes from the repository asynchronously
         viewModelScope.launch {
             _notes.value = repository.getAllNotes()
+        }
+    }
+
+    private fun getFilteredNotes() {
+        viewModelScope.launch {
+            if (searchQuery.value.isBlank()) {
+                _notes.value = repository.getAllNotes()
+            }
+            else {
+                _notes.value = repository.getFilteredNotes(searchQuery.value)
+            }
         }
     }
 

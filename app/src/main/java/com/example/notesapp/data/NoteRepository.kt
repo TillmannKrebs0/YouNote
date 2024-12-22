@@ -1,5 +1,6 @@
 package com.example.notesapp.data
 
+import androidx.room.Query
 import com.example.notesapp.model.Note
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -8,6 +9,12 @@ class NoteRepository(private val noteDao: NoteDao) {
     suspend fun getAllNotes(): List<Note> {
         return withContext(Dispatchers.IO) {
             noteDao.getAllNotes()
+        }
+    }
+
+    suspend fun getFilteredNotes( query: String): List<Note> {
+        return withContext(Dispatchers.IO) {
+            noteDao.getFilteredNotes(query)
         }
     }
 

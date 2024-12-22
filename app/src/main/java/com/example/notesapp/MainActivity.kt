@@ -69,9 +69,7 @@ fun NotesApp(viewModel: NotesViewModel) {
 
         ControlBar(
             modifier = Modifier.fillMaxWidth(),
-            onTextChange = { query ->
-                searchQuery = query
-            }
+            onTextChange = { viewModel.onSearchQueryChanged(it)}
         )
 
         NoteList(

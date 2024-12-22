@@ -14,4 +14,7 @@ interface NoteDao {
 
     @Query("SELECT * FROM notes")
     fun getAllNotes(): List<Note>
+
+    @Query("SELECT * FROM notes WHERE content LIKE '%' || :query || '%'")
+    fun getFilteredNotes(query: String): List<Note>
 }

@@ -56,4 +56,5 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
             _notes.value = repository.getAllNotes()
         }
     }
+
 }

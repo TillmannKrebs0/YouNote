@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.room.runtime)
     kapt(libs.room.compiler) // Annotation processing
     implementation(libs.room.ktx) // Kotlin extensions for Room
+    implementation(libs.androidx.material.icons.extended)
 
     // AndroidX and Compose
     implementation(libs.androidx.core.ktx)

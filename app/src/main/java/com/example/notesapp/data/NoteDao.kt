@@ -12,6 +12,9 @@ interface NoteDao {
     @Insert
     fun insert(note: Note): Long
 
+    @Delete
+    fun  delete(note: Note)
+
     @Query("SELECT * FROM notes")
     fun getAllNotes(): List<Note>
 

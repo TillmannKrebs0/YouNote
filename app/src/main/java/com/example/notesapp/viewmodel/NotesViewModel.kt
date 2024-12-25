@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.StateFlow
 import com.example.notesapp.model.Note
 import com.example.notesapp.data.NoteRepository
 import com.example.notesapp.data.YouNoteDatabase
-import kotlinx.coroutines.flow.collect
 
 class NotesViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -59,6 +58,17 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun deleteNote(note:Note) {
+        viewModelScope.launch {
+            repository.delete(note)
+            getFilteredNotes()
+        }
+    }
+
+    fun showOldestFirst() {
+        _notes.value = _notes.value.reversed()
+    }
+
     private fun getAllNotes() {
         // Fetch all notes from the repository asynchronously
         viewModelScope.launch {
@@ -76,5 +86,7 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
+
 
 }

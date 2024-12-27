@@ -34,12 +34,13 @@ import com.example.notesapp.viewmodel.NotesViewModel
 fun ControlBar(
     modifier: Modifier = Modifier,
     onTextChange: (String) -> Unit,
-    onFilterOpen: () -> Unit
+    onFilterOpen: () -> Unit,
+    onSideBarOpen: () -> Unit
 ) {
     var search by remember { mutableStateOf("") }
 
     Row {
-        Button(onClick = { /*TODO*/ }) {
+        Button(onClick = { onSideBarOpen() }) {
             Icon(
                 Icons.Rounded.Menu,
                 contentDescription = "openMenu"

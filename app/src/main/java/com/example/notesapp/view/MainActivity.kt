@@ -58,6 +58,9 @@ fun NotesApp(viewModel: NotesViewModel) {
     var inputFieldHeight by remember { mutableStateOf(70.dp) }
     var filterOpen by remember { mutableStateOf<Boolean>(false) }
     var noteOptionsOpen by remember { mutableStateOf<Boolean>(false) }
+    var sideBarOpen by remember { mutableStateOf<Boolean>(false) }
+
+    var items by remember { mutableStateOf(listOf("Item 1", "Item 2", "Item 3")) }
 
     LaunchedEffect(notes.size) {
         if (notes.isNotEmpty()) {
@@ -77,7 +80,8 @@ fun NotesApp(viewModel: NotesViewModel) {
             ControlBar(
                 modifier = Modifier.fillMaxWidth(),
                 onTextChange = { viewModel.onSearchQueryChanged(it) },
-                onFilterOpen = { filterOpen = !filterOpen }
+                onFilterOpen = { filterOpen = !filterOpen },
+                onSideBarOpen = { sideBarOpen = !sideBarOpen}
             )
 
             NoteList(
@@ -124,6 +128,18 @@ fun NotesApp(viewModel: NotesViewModel) {
             FilterMenu(
                 viewModel,
                 onToggleFilter = {filterOpen = !filterOpen}
+            )
+        }
+        if (sideBarOpen) {
+            Sidebar(
+                items = items,
+                onAddItem = {
+                    items = items + "Item ${items.size + 1}"
+                },
+                onItemClick = { selectedItem ->
+                    // Handle item click
+                } ,
+                onSideBarClose = { sideBarOpen = !sideBarOpen}
             )
         }
     }

@@ -56,8 +56,8 @@ fun NotesApp(viewModel: NotesViewModel) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     var inputFieldHeight by remember { mutableStateOf(70.dp) }
-    var selectedNote by remember { mutableStateOf<Note?>(null) }
     var filterOpen by remember { mutableStateOf<Boolean>(false) }
+    var noteOptionsOpen by remember { mutableStateOf<Boolean>(false) }
 
     LaunchedEffect(notes.size) {
         if (notes.isNotEmpty()) {
@@ -83,7 +83,8 @@ fun NotesApp(viewModel: NotesViewModel) {
             NoteList(
                 listState = listState,
                 notes = notes,
-                onNoteSelected = { note -> selectedNote = note },
+                onNoteSelected = { note -> viewModel.selectedNote = note },
+                onToggleNoteOptions = {noteOptionsOpen = !noteOptionsOpen},
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(bottom = inputFieldHeight)
@@ -93,7 +94,7 @@ fun NotesApp(viewModel: NotesViewModel) {
             InputBar(
                 textInput = textInput,
                 onTextChange = { viewModel.onTextChanged(it) },
-                onPostNote = { viewModel.addNote() },
+                onPostNote = { viewModel.handleNoteAction() },
                 onHeightChanged = { newHeight -> inputFieldHeight = newHeight },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -102,18 +103,19 @@ fun NotesApp(viewModel: NotesViewModel) {
         }
 
         // Overlay bottom card above everything
-        selectedNote?.let { note ->
+        if (noteOptionsOpen) {
             EditDeleteBottomCard(
-                selectedNote = note,
+                selectedNote = viewModel.selectedNote,
                 onEdit = {
-                    // ToDo: Handle edit
-                    selectedNote = null
+                    noteOptionsOpen = false
+                    viewModel.selectedNote?.let { viewModel.onTextChanged(it.content) }
                 },
                 onDelete = {
-                    viewModel.deleteNote(note)
-                    selectedNote = null
+                    viewModel.selectedNote?.let { viewModel.deleteNote(it) }
+                    noteOptionsOpen = false
+                    viewModel.selectedNote = null
                 },
-                onDismiss = { selectedNote = null },
+                onDismiss = { viewModel.selectedNote = null },
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
         }
@@ -126,8 +128,5 @@ fun NotesApp(viewModel: NotesViewModel) {
         }
     }
 }
-
-
-
 
 

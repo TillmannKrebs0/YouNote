@@ -24,6 +24,7 @@ fun NoteList(
     listState: LazyListState,
     notes: List<Note>,
     onNoteSelected: (Note) -> Unit,
+    onToggleNoteOptions: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -33,7 +34,10 @@ fun NoteList(
         items(notes) { currentNote ->
             NoteItem(
                 note = currentNote,
-                onLongPress = onNoteSelected
+                onLongPress = {
+                    onNoteSelected(currentNote)
+                    onToggleNoteOptions()
+                }
             )
         }
     }

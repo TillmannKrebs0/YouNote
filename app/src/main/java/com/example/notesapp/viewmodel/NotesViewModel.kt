@@ -3,7 +3,12 @@ package com.example.notesapp.viewmodel
 import android.app.Application
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +31,9 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
     private val _notes = MutableStateFlow<List<Note>>(emptyList())
     val notes: StateFlow<List<Note>> = _notes
 
+    var selectedNote: Note? = null
+
+
     init {
         getAllNotes()
     }
@@ -41,22 +49,57 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun addNote() {
-        if (_textInput.value.isNotBlank()) {
+        if (_textInput.value.isBlank()) {
+            return
+        }
+
+        viewModelScope.launch {
             // Create new note
             val newNote = Note(
                 content = _textInput.value,
-                category = "cat1", // You can update this to use dynamic categories if needed
+                category = "cat1",
                 isSecret = false
             )
-            // Use the repository to insert the note into the database
-            viewModelScope.launch {
-                repository.insert(newNote)
-                // After adding the note, refresh the list of notes
-                getFilteredNotes()
-            }
-            _textInput.value = "" // Clear input field
+            repository.insert(newNote)
+
+            refreshNotes()
         }
     }
+
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun handleNoteAction() {
+        viewModelScope.launch {
+            if (selectedNote != null) {
+                updateNoteContent()
+            } else {
+                addNote()
+            }
+        }
+    }
+
+
+    fun updateNoteContent() {
+        if (_textInput.value.isBlank()) {
+            selectedNote?.let { deleteNote(it) }
+        }
+
+        val updatedNote = selectedNote!!.copy(
+            content = _textInput.value,
+        )
+        viewModelScope.launch {
+            repository.update(updatedNote)
+        }
+        selectedNote = null
+        refreshNotes()
+    }
+
+    private fun refreshNotes() {
+        getFilteredNotes()
+        _textInput.value = "" // Clear input field
+    }
+
+
 
     fun deleteNote(note:Note) {
         viewModelScope.launch {
@@ -86,7 +129,5 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-
-
 
 }

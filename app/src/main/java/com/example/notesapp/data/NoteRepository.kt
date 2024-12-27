@@ -29,4 +29,10 @@ class NoteRepository(private val noteDao: NoteDao) {
             noteDao.delete(note)
         }
     }
+
+    suspend fun update(note: Note) {
+        withContext(Dispatchers.IO) {
+            noteDao.update(note)
+        }
+    }
 }

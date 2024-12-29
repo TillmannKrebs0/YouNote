@@ -41,6 +41,7 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
     var filterOpen by remember { mutableStateOf(false) }
     var noteOptionsOpen by remember { mutableStateOf(false) }
     var sideBarOpen by remember { mutableStateOf(false) }
+    var addCategoryBoxOpen by remember { mutableStateOf(false) }
 
     LaunchedEffect(notes.size) {
         if (notes.isNotEmpty()) {
@@ -114,15 +115,24 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
             Sidebar(
                 items = categories,
                 onAddCategory = {
-                    categoryViewModel.addCategory()
+                    addCategoryBoxOpen = true
                 },
                 onItemClick = { selectedItem ->
                     categoryViewModel.setActiveCategory(selectedItem)
                     sideBarOpen = false
                 } ,
                 onSideBarClose = { sideBarOpen = false } ,
+            )
+        }
+
+        if (addCategoryBoxOpen) {
+            AddCategoryBox(
                 addCategoryInput = categoryInput,
-                onCategoryInputChange = { categoryViewModel.onCategoryInputChanged(it)}
+                onTextInputChange = { categoryViewModel.onCategoryInputChanged(it) },
+                isChecked = false,
+                onCheckboxChange = {/*todo*/},
+                onDismiss = { addCategoryBoxOpen = false },
+                onConfirm = { categoryViewModel.addCategory()}
             )
         }
     }

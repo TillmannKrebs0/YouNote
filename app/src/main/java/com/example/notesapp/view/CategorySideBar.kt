@@ -19,13 +19,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
+import com.example.notesapp.model.Category
 
 @Composable
 fun Sidebar(
-    items: List<String>,
-    onAddItem: () -> Unit,
-    onItemClick: (String) -> Unit,
+    items: List<Category>,
+    onAddCategory: () -> Unit,
+    onItemClick: (Category) -> Unit,
     onSideBarClose: () -> Unit,
+    addCategoryInput: String,
+    onCategoryInputChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -67,9 +70,16 @@ fun Sidebar(
                     }
                 }
 
+                OutlinedTextField(
+                    value = addCategoryInput,
+                    onValueChange = onCategoryInputChange,
+                    singleLine = true,
+                    placeholder = { Text("Enter new Category name:...") }
+                )
+
                 // Add Item button
                 Button(
-                    onClick = onAddItem,
+                    onClick = onAddCategory,
                     modifier = Modifier
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                         .fillMaxWidth()
@@ -88,7 +98,7 @@ fun Sidebar(
                 ) {
                     items(items) { item ->
                         SidebarItem(
-                            text = item,
+                            text = item.name,
                             onClick = { onItemClick(item) }
                         )
                     }

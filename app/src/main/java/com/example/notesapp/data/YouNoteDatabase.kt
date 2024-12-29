@@ -4,11 +4,15 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.notesapp.model.Category
 import com.example.notesapp.model.Note
 
-@Database(entities = [Note::class], version = 1, exportSchema = false) // Include all entities here
+@Database(entities = [Note::class, Category::class], version = 2, exportSchema = false)
 abstract class YouNoteDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
+    abstract fun categoryDao(): CategoryDao
 
     companion object {
         @Volatile
@@ -16,15 +20,18 @@ abstract class YouNoteDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): YouNoteDatabase {
             val tempInstance = INSTANCE
-            if(tempInstance != null) {
+            if (tempInstance != null) {
                 return tempInstance
             }
+            
+
             synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     YouNoteDatabase::class.java,
-                    "note_database" // A descriptive name for the database file
-                ).build()
+                    "note_database"
+                ).fallbackToDestructiveMigration()  // Ensures that the database is dropped on version change
+                    .build()
                 INSTANCE = instance
                 return instance
             }

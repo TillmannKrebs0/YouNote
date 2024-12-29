@@ -14,12 +14,20 @@ import com.example.notesapp.data.NoteRepository
 import com.example.notesapp.model.Category
 import com.example.notesapp.data.YouNoteDatabase
 import kotlinx.coroutines.flow.first
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 data class NotesUiState(
     val notes: List<Note> = emptyList(),
     val textInput: String = "",
     val searchQuery: String = "",
-    val selectedNote: Note? = null
+    val selectedNote: Note? = null,
+    val showOldestFirst: Boolean = false,
+    val onlyShowEdited: Boolean = false,
+    val showNotesAtDate:  String? = null,
+    val showNotesAfterDate:  String? = null,
+    val showNotesBeforeDate:  String? = null
 )
 
 class NotesViewModel(
@@ -45,18 +53,26 @@ class NotesViewModel(
 
     private fun loadNotesForCategory(category: Category) {
         viewModelScope.launch {
-            val notes = if (_uiState.value.searchQuery.isBlank()) {
-                noteRepository.getAllNotesOfCategory(category.id)
-            } else {
-                noteRepository.getFilteredNotesOfCategory(_uiState.value.searchQuery, category.id)
-            }
+            val state = _uiState.value
+
+            val notes = noteRepository.getNotesByFilters(
+                    categoryID = category.id,
+                    onlyEdited =  state.onlyShowEdited,
+                    showOldestFirst = state.showOldestFirst,
+                    searchQuery = state.searchQuery,
+                    onDate = state.showNotesAtDate,
+                    beforeDate = state.showNotesBeforeDate,
+                    afterDate = state.showNotesAfterDate
+            )
+
             _uiState.value = _uiState.value.copy(notes = notes)
         }
     }
 
+
     fun onSearchQueryChanged(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
-        categoryViewModel.uiState.value.activeCategory?.let { loadNotesForCategory(it) }
+        reloadNotes()
     }
 
     fun onTextChanged(text: String) {
@@ -73,10 +89,11 @@ class NotesViewModel(
                 val newNote = Note(
                     content = currentState.textInput,
                     categoryId = category.id,
-                    isSecret = false
+                    isSecret = false,
+                    isEdited = false
                 )
                 noteRepository.insert(newNote)
-                loadNotesForCategory(category)
+                reloadNotes()
                 _uiState.value = _uiState.value.copy(textInput = "")
             }
         }
@@ -106,6 +123,7 @@ class NotesViewModel(
         viewModelScope.launch {
             val updatedNote = currentState.selectedNote!!.copy(
                 content = currentState.textInput,
+                isEdited = true,
             )
             noteRepository.update(updatedNote)
 
@@ -118,9 +136,7 @@ class NotesViewModel(
     }
 
     private fun refreshNotes() {
-        categoryViewModel.uiState.value.activeCategory?.let { category ->
-            loadNotesForCategory(category)
-        }
+        reloadNotes()
         _uiState.value = _uiState.value.copy(
             selectedNote = null,
             textInput = ""
@@ -130,17 +146,11 @@ class NotesViewModel(
     fun deleteNote(note: Note) {
         viewModelScope.launch {
             noteRepository.delete(note)
-            categoryViewModel.uiState.value.activeCategory?.let { category ->
-                loadNotesForCategory(category)
-            }
+            reloadNotes()
         }
     }
 
-    fun showOldestFirst() {
-        _uiState.value = _uiState.value.copy(
-            notes = _uiState.value.notes.reversed()
-        )
-    }
+
 
     fun selectNote(note: Note?) {
         _uiState.value = _uiState.value.copy(selectedNote = note)
@@ -148,6 +158,72 @@ class NotesViewModel(
 
     fun clearSelectedNote() {
         _uiState.value = _uiState.value.copy(selectedNote = null)
+    }
+
+    fun toggleShowOldestFirst() {
+        _uiState.value = _uiState.value.copy(showOldestFirst = !uiState.value.showOldestFirst)
+        reloadNotes()
+    }
+
+    fun toggleShowEdited() {
+        _uiState.value = _uiState.value.copy(onlyShowEdited = !uiState.value.onlyShowEdited)
+        reloadNotes()
+    }
+
+    fun filterByDate(selectedDate: Long) {
+        val date = Date(selectedDate)
+        val formattedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(date)
+
+        _uiState.value = _uiState.value.copy(showNotesAtDate = formattedDate)
+
+        reloadNotes()
+    }
+
+    fun resetFilters() {
+        _uiState.value = _uiState.value.copy(
+            searchQuery = "",
+            showOldestFirst = false,
+            onlyShowEdited = false,
+            showNotesAtDate= null,
+            showNotesBeforeDate = null,
+            showNotesAfterDate = null
+        )
+        reloadNotes()
+    }
+
+    private fun reloadNotes() {
+        categoryViewModel.uiState.value.activeCategory?.let { category ->
+            loadNotesForCategory(category)
+        }
+    }
+
+    fun filterBeforeDate(selectedDate: Long) {
+        val date = Date(selectedDate)
+        val formattedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(date)
+
+
+
+        _uiState.value = _uiState.value.copy(
+            showNotesBeforeDate = formattedDate,
+            showNotesAtDate = null,
+            showNotesAfterDate = null
+        )
+
+        reloadNotes()
+    }
+
+    fun filterAfterDate(selectedDate: Long) {
+        val date = Date(selectedDate)
+        val formattedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(date)
+
+        _uiState.value = _uiState.value.copy(
+            showNotesAfterDate = formattedDate,
+            showNotesAtDate = null,
+            showNotesBeforeDate = null
+
+        )
+
+        reloadNotes()
     }
 
 }

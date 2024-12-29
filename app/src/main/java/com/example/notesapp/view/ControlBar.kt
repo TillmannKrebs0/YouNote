@@ -23,6 +23,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.rounded.FilterAlt
 import androidx.compose.material3.Card
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.input.pointer.pointerInput
 import com.example.notesapp.viewmodel.NotesViewModel
@@ -35,6 +41,7 @@ fun ControlBar(
     onSideBarOpen: () -> Unit
 ) {
     var search by remember { mutableStateOf("") }
+
 
     Row {
         Button(onClick = { onSideBarOpen() }) {
@@ -73,6 +80,9 @@ fun FilterMenu(
     viewModel: NotesViewModel,
     onToggleFilter: () -> Unit
 ) {
+    var showDatePicker by remember { mutableStateOf(false) }
+    var currentDateOperation by remember { mutableStateOf<DateOperation>(DateOperation.None) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -88,12 +98,105 @@ fun FilterMenu(
         ) {
             Column(modifier = Modifier.padding(8.dp)) {
                 Button(onClick = {
-                    viewModel.showOldestFirst()
+                    viewModel.toggleShowOldestFirst()
                     onToggleFilter()
                 }) {
-                    Text(text = "Change Note order")
+                    Text(text = "Show Oldest First") //todo: change depending on state
+                }
+                Button(onClick = {
+                    viewModel.toggleShowEdited()
+                    onToggleFilter()
+                }) {
+                    Text(text = "Toggle edited") //todo: change depending on state
+                }
+
+                Button(onClick = {
+                    currentDateOperation = DateOperation.OnDate
+                    showDatePicker = true
+                }) {
+                    Text(text = "Show Notes on specific Date")
+                }
+
+                Button(onClick = {
+                    currentDateOperation = DateOperation.Before
+                    showDatePicker = true
+                }) {
+                    Text(text = "Show Notes BEFORE Date")
+                }
+
+                Button(onClick = {
+                    currentDateOperation = DateOperation.After
+                    showDatePicker = true
+                }) {
+                    Text(text = "Show Notes AFTER Date")
+                }
+
+
+
+                HorizontalDivider(thickness = 1.dp)
+
+                Button(onClick = { viewModel.resetFilters() }) {
+                    Text(text = "Remove all Filters")
+                }
+
+                if (showDatePicker) {
+                    DatePickerModal(
+                        onDateSelected = { dateMillis ->
+                            dateMillis?.let {
+                                when (currentDateOperation) {
+                                    DateOperation.OnDate -> viewModel.filterByDate(it)
+                                    DateOperation.Before -> viewModel.filterBeforeDate(it)
+                                    DateOperation.After -> viewModel.filterAfterDate(it)
+                                    DateOperation.None -> { /* Should never happen */ }
+                                }
+                            }
+                            currentDateOperation = DateOperation.None
+                        },
+                        onDismiss = {
+                            showDatePicker = false
+                            currentDateOperation = DateOperation.None
+                        }
+                    )
                 }
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DatePickerModal(
+    onDateSelected: (Long?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val datePickerState = rememberDatePickerState()
+
+
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = {
+                onDateSelected(datePickerState.selectedDateMillis)
+                onDismiss()
+            }) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    ) {
+        DatePicker(state = datePickerState)
+    }
+}
+
+
+private sealed class DateOperation {
+    object None : DateOperation()
+    object OnDate : DateOperation()
+    object Before : DateOperation()
+    object After : DateOperation()
 }

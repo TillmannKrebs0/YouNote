@@ -35,13 +35,16 @@ data class Note(
     val isSecret: Boolean,
 
     @ColumnInfo(name = "creationDate")
-    val creationDate: String = getCurrentDateTime()
+    val creationDate: String = getCurrentDateTime(),
+
+    @ColumnInfo(name = "isEdited")
+    val isEdited: Boolean
 ) {
     companion object {
         @RequiresApi(Build.VERSION_CODES.O)
         fun getCurrentDateTime(): String {
             val currentDateTime = LocalDateTime.now()
-            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
             return currentDateTime.format(formatter)
         }
     }

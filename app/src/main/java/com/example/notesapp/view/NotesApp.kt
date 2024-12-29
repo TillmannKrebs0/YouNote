@@ -100,7 +100,9 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
                     noteOptionsOpen = false
                     notesViewModel.clearSelectedNote()
                 },
-                onDismiss = {  notesViewModel.clearSelectedNote() },
+                onDismiss = {
+                    notesViewModel.clearSelectedNote()
+                    noteOptionsOpen = false },
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
         }

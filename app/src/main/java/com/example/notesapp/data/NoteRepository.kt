@@ -1,19 +1,20 @@
 package com.example.notesapp.data
 
+import androidx.room.util.query
 import com.example.notesapp.model.Note
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class NoteRepository(private val noteDao: NoteDao) {
-    suspend fun getAllNotes(): List<Note> {
+    suspend fun getAllNotesOldestFirst(categoryID: Int): List<Note> {
         return withContext(Dispatchers.IO) {
-            noteDao.getAllNotes()
+            noteDao.getAllNotesOldestFirst(categoryID = categoryID)
         }
     }
 
-    suspend fun getFilteredNotes( query: String): List<Note> {
+    suspend fun getFilteredNotesOldestFirst( categoryID: Int, query: String): List<Note> {
         return withContext(Dispatchers.IO) {
-            noteDao.getFilteredNotes(query)
+            noteDao.getFilteredNotesOldestFirst(query, categoryID)
         }
     }
 
@@ -45,5 +46,27 @@ class NoteRepository(private val noteDao: NoteDao) {
         withContext(Dispatchers.IO) {
             noteDao.update(note)
         }
+    }
+
+    suspend fun getNotesByFilters(
+        categoryID: Int,
+        onlyEdited: Boolean,
+        showOldestFirst: Boolean,
+        searchQuery: String,
+        beforeDate: String?,
+        afterDate: String?,
+        onDate: String?): List<Note> {
+            val sortOrder = if (showOldestFirst) "ASC" else "DESC"
+            return withContext(Dispatchers.IO) {
+                noteDao.getNotesByFilters(
+                    categoryID = categoryID,
+                    onlyEdited = onlyEdited,
+                    sortOrder = sortOrder,
+                    beforeDate = beforeDate,
+                    afterDate = afterDate,
+                    query = searchQuery,
+                    onDate = onDate
+                )
+            }
     }
 }

@@ -15,91 +15,79 @@ import com.example.notesapp.model.Category
 import com.example.notesapp.data.YouNoteDatabase
 import kotlinx.coroutines.flow.first
 
-class NotesViewModel(application: Application) : AndroidViewModel(application) {
+data class NotesUiState(
+    val notes: List<Note> = emptyList(),
+    val textInput: String = "",
+    val searchQuery: String = "",
+    val selectedNote: Note? = null
+)
 
-    private val noteDao = YouNoteDatabase.getDatabase(application).noteDao()
-    private val noteRepository = NoteRepository(noteDao)
-    private  val categoryDao = YouNoteDatabase.getDatabase(application).categoryDao()
-    private val categoryRepository = CategoryRepository(categoryDao)
+class NotesViewModel(
+    application: Application,
+    private val noteRepository: NoteRepository,
+    private val categoryViewModel: CategoryViewModel
+) : AndroidViewModel(application) {
 
-    private val _textInput = MutableStateFlow("")
-    val textInput: StateFlow<String> = _textInput
-
-    private val _categoryInput = MutableStateFlow("")
-    val categoryInput: StateFlow<String> = _categoryInput
-
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery
-
-    private val _notes = MutableStateFlow<List<Note>>(emptyList())
-    val notes: StateFlow<List<Note>> = _notes
-
-    private val _categories = MutableStateFlow<List<Category>>(emptyList())
-    val categories: StateFlow<List<Category>> = _categories
-
-    var selectedNote: Note? = null
-    private val _activeCategory = MutableStateFlow<Category?>(null)
-    val activeCategory: StateFlow<Category?> = _activeCategory
+    private val _uiState = MutableStateFlow(NotesUiState())
+    val uiState: StateFlow<NotesUiState> = _uiState
 
 
     init {
-        getAllCategories()
-
-        // set initial Category to be the first Category, then get all associated notes
         viewModelScope.launch {
-            categories.collect { categoriesList ->
-                if (_activeCategory.value == null && categoriesList.isNotEmpty()) {
-                    _activeCategory.value = categoriesList.first()
-                    getAllNotes()
+            // Observe active category changes and update notes accordingly
+            categoryViewModel.uiState.collect { categoriesState ->
+                categoriesState.activeCategory?.let { category ->
+                    loadNotesForCategory(category)
                 }
             }
         }
     }
 
-    private fun getAllCategories() {
+    private fun loadNotesForCategory(category: Category) {
         viewModelScope.launch {
-            _categories.value = categoryRepository.getAllCategories()
+            val notes = if (_uiState.value.searchQuery.isBlank()) {
+                noteRepository.getAllNotesOfCategory(category.id)
+            } else {
+                noteRepository.getFilteredNotesOfCategory(_uiState.value.searchQuery, category.id)
+            }
+            _uiState.value = _uiState.value.copy(notes = notes)
         }
     }
 
-    fun onSearchQueryChanged(newQuery: String) {
-        _searchQuery.value = newQuery
-        getFilteredNotes()
+    fun onSearchQueryChanged(query: String) {
+        _uiState.value = _uiState.value.copy(searchQuery = query)
+        categoryViewModel.uiState.value.activeCategory?.let { loadNotesForCategory(it) }
     }
 
-    fun onTextChanged(newText: String) {
-        _textInput.value = newText
-    }
-
-    fun onCategoryInputChanged(newText: String) {
-        _categoryInput.value = newText
+    fun onTextChanged(text: String) {
+        _uiState.value = _uiState.value.copy(textInput = text)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun addNote() {
-        if (_textInput.value.isBlank()) {
-            return
-        }
+        val currentState = _uiState.value
+        if (currentState.textInput.isBlank()) return
 
         viewModelScope.launch {
-            val currentCategory = _activeCategory.value
-            if (currentCategory != null) {
+            categoryViewModel.uiState.value.activeCategory?.let { category ->
                 val newNote = Note(
-                    content = _textInput.value,
-                    categoryId = currentCategory.id,
+                    content = currentState.textInput,
+                    categoryId = category.id,
                     isSecret = false
                 )
                 noteRepository.insert(newNote)
-                refreshNotes()
+                loadNotesForCategory(category)
+                _uiState.value = _uiState.value.copy(textInput = "")
             }
         }
     }
 
-
     @RequiresApi(Build.VERSION_CODES.O)
     fun handleNoteAction() {
+        val currentState = _uiState.value
+
         viewModelScope.launch {
-            if (selectedNote != null) {
+            if (currentState.selectedNote != null) {
                 updateNoteContent()
             } else {
                 addNote()
@@ -107,85 +95,59 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun updateNoteContent() {
+        val currentState = _uiState.value
 
-    fun updateNoteContent() {
-        if (_textInput.value.isBlank()) {
-            selectedNote?.let { deleteNote(it) }
-        }
-
-        val updatedNote = selectedNote!!.copy(
-            content = _textInput.value,
-        )
-        viewModelScope.launch {
-            noteRepository.update(updatedNote)
-        }
-        selectedNote = null
-        refreshNotes()
-    }
-
-    private fun refreshNotes() {
-        getFilteredNotes()
-        _textInput.value = "" // Clear input field
-    }
-
-
-
-    fun deleteNote(note: Note) {
-        viewModelScope.launch {
-            noteRepository.delete(note)
-            getFilteredNotes()
-        }
-    }
-
-    fun showOldestFirst() {
-        _notes.value = _notes.value.reversed()
-    }
-
-    private fun getAllNotes() {
-        // Fetch all notes from the noteRepository asynchronously
-        viewModelScope.launch {
-            val currentCategory = activeCategory.value ?: return@launch
-            _notes.value = noteRepository.getAllNotesOfCategory(categoryID = currentCategory.id)
-        }
-    }
-
-    private fun getFilteredNotes() {
-        viewModelScope.launch {
-            val currentCategory = activeCategory.value ?: return@launch
-
-            _notes.value = if (searchQuery.value.isBlank()) {
-                noteRepository.getAllNotesOfCategory(currentCategory.id)
-            } else {
-                noteRepository.getFilteredNotesOfCategory(searchQuery.value, currentCategory.id)
-            }
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun addCategory() {
-        if (_categoryInput.value.isBlank()) {
+        if (currentState.textInput.isBlank()) {
+            currentState.selectedNote?.let { deleteNote(it) }
             return
         }
 
         viewModelScope.launch {
-            val newCategory = Category(
-                name = _categoryInput.value
+            val updatedNote = currentState.selectedNote!!.copy(
+                content = currentState.textInput,
             )
-            categoryRepository.insert(newCategory)
+            noteRepository.update(updatedNote)
 
-            refreshCategories()
+            _uiState.value = _uiState.value.copy(
+                selectedNote = null,
+                textInput = ""
+            )
+            refreshNotes()
         }
-
     }
 
-    private fun refreshCategories() {
-        getAllCategories()
-        _categoryInput.value = ""
+    private fun refreshNotes() {
+        categoryViewModel.uiState.value.activeCategory?.let { category ->
+            loadNotesForCategory(category)
+        }
+        _uiState.value = _uiState.value.copy(
+            selectedNote = null,
+            textInput = ""
+        )
     }
 
-    fun setActiveCategory(category: Category) {
-        _activeCategory.value = category
-        getFilteredNotes()
+    fun deleteNote(note: Note) {
+        viewModelScope.launch {
+            noteRepository.delete(note)
+            categoryViewModel.uiState.value.activeCategory?.let { category ->
+                loadNotesForCategory(category)
+            }
+        }
+    }
+
+    fun showOldestFirst() {
+        _uiState.value = _uiState.value.copy(
+            notes = _uiState.value.notes.reversed()
+        )
+    }
+
+    fun selectNote(note: Note?) {
+        _uiState.value = _uiState.value.copy(selectedNote = note)
+    }
+
+    fun clearSelectedNote() {
+        _uiState.value = _uiState.value.copy(selectedNote = null)
     }
 
 }

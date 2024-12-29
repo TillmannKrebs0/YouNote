@@ -23,7 +23,9 @@ abstract class YouNoteDatabase : RoomDatabase() {
             if (tempInstance != null) {
                 return tempInstance
             }
-            
+
+            //context.deleteDatabase("note_database")
+
 
             synchronized(this) {
                 val instance = Room.databaseBuilder(

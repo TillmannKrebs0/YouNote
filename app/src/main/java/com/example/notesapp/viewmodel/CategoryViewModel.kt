@@ -14,8 +14,12 @@ import kotlinx.coroutines.launch
 data class CategoriesUiState(
     val categories: List<Category> = emptyList(),
     val activeCategory: Category? = null,
-    val categoryInput: String = ""
-)
+    val categoryInput: String = "",
+    val secretFlagSet: Boolean = false,
+    val categoryPassword: String = ""
+) {
+
+}
 
 class CategoryViewModel(
     application: Application,
@@ -43,8 +47,16 @@ class CategoryViewModel(
         _uiState.value = _uiState.value.copy(categoryInput = text)
     }
 
+    fun onCategoryPasswordChanged(text: String) {
+        _uiState.value = _uiState.value.copy(categoryPassword = text)
+    }
+
     fun setActiveCategory(category: Category) {
         _uiState.value = _uiState.value.copy(activeCategory = category)
+    }
+
+    fun toggleSecretFlag() {
+        _uiState.value = _uiState.value.copy(secretFlagSet = !_uiState.value.secretFlagSet)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -53,8 +65,16 @@ class CategoryViewModel(
         if (currentState.categoryInput.isBlank()) return
 
         viewModelScope.launch {
-            val newCategory = Category(name = currentState.categoryInput)
-            categoryRepository.insert(newCategory)
+            if (_uiState.value.secretFlagSet) {
+                val newCategory =
+                    Category(name = currentState.categoryInput, isSecret = true, password = _uiState.value.categoryPassword)
+                categoryRepository.insert(newCategory)
+                _uiState.value = _uiState.value.copy(secretFlagSet = false, categoryPassword = "")
+            } else {
+                val newCategory =
+                    Category(name = currentState.categoryInput, isSecret = false, password = null)
+                categoryRepository.insert(newCategory)
+            }
             loadCategories()
             _uiState.value = _uiState.value.copy(categoryInput = "")
         }

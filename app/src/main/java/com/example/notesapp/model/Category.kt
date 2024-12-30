@@ -13,5 +13,12 @@ data class Category(
     val id: Int = 0,
 
     @ColumnInfo(name = "content")
-    val name: String
+    val name: String,
+
+    @ColumnInfo(name = "isSecret")
+    val isSecret: Boolean,
+
+    @ColumnInfo(name = "password")
+    val password: String?
+
 )

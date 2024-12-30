@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.notesapp.model.Category
 import com.example.notesapp.viewmodel.CategoryViewModel
 import com.example.notesapp.viewmodel.NotesViewModel
 import kotlinx.coroutines.launch
@@ -33,6 +34,7 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
     val notes = noteUiState.notes
     val categories = categoryUiState.categories
     val categoryInput = categoryUiState.categoryInput
+    val categoryPassword = categoryUiState.categoryPassword
 
     /// TODO: write own ViewModel for these States
     val listState = rememberLazyListState()
@@ -42,6 +44,12 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
     var noteOptionsOpen by remember { mutableStateOf(false) }
     var sideBarOpen by remember { mutableStateOf(false) }
     var addCategoryBoxOpen by remember { mutableStateOf(false) }
+    var deleteConfirmOpen by remember { mutableStateOf(false) }
+
+    var askPasswordOpen by remember { mutableStateOf(false) }
+    var passwordInput by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf<Category?>(null) }
+
 
     LaunchedEffect(notes.size) {
         if (notes.isNotEmpty()) {
@@ -119,11 +127,40 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
                 onAddCategory = {
                     addCategoryBoxOpen = true
                 },
-                onItemClick = { selectedItem ->
-                    categoryViewModel.setActiveCategory(selectedItem)
-                    sideBarOpen = false
-                } ,
+                onItemClick = { category ->
+                    if (category.isSecret) {
+                        selectedCategory = category
+                        askPasswordOpen = true
+                    } else {
+                        categoryViewModel.setActiveCategory(category)
+                        sideBarOpen = false
+                    }
+                },
                 onSideBarClose = { sideBarOpen = false } ,
+            )
+        }
+
+
+        if (askPasswordOpen) {
+            PasswordPopup(
+                category = selectedCategory!!,
+                password = passwordInput,
+                onConfirm = {
+                    if (passwordInput == selectedCategory?.password) {
+                        selectedCategory?.let { categoryViewModel.setActiveCategory(it) }
+                        sideBarOpen = false
+                        askPasswordOpen = false
+                        passwordInput = ""
+                        selectedCategory = null
+                    }
+                },
+                onDismiss = {
+                    askPasswordOpen = false
+                    passwordInput = ""
+                    selectedCategory = null
+                },
+                onPasswordChange = { passwordInput = it }
+
             )
         }
 
@@ -131,8 +168,10 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
             AddCategoryBox(
                 addCategoryInput = categoryInput,
                 onTextInputChange = { categoryViewModel.onCategoryInputChanged(it) },
-                isChecked = false,
-                onCheckboxChange = {/*todo*/},
+                categoryPassword = categoryPassword,
+                onPasswordChange = { categoryViewModel.onCategoryPasswordChanged(it) },
+                isChecked = categoryUiState.secretFlagSet,
+                onCheckboxChecked = {categoryViewModel.toggleSecretFlag()},
                 onDismiss = { addCategoryBoxOpen = false },
                 onConfirm = { categoryViewModel.addCategory()}
             )

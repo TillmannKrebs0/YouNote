@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.notesapp.model.Category
 
@@ -90,7 +91,7 @@ fun Sidebar(
                 ) {
                     items(items) { item ->
                         SidebarItem(
-                            text = item.name,
+                            category = item,
                             onClick = { onItemClick(item) }
                         )
                     }
@@ -102,7 +103,7 @@ fun Sidebar(
 
 @Composable
 private fun SidebarItem(
-    text: String,
+    category: Category,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -121,36 +122,37 @@ private fun SidebarItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+            Text(
+                text = category.name,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
 
 @Composable
-fun  AddCategoryBox(
+fun AddCategoryBox(
     addCategoryInput: String,
-    onTextInputChange: (String) -> Unit,
+    categoryPassword: String,
     isChecked: Boolean,
-    onCheckboxChange: (Boolean) -> Unit,
+    onTextInputChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onCheckboxChecked: () -> Unit,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
-    // Box to position the popup in the center of the screen
     Box(
         modifier = Modifier
             .fillMaxSize(),
         contentAlignment = Alignment.TopCenter
     ) {
-        // The background overlay (optional, you can remove this if you want a transparent background)
+        // Background overlay
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.5f))
-                .clickable { onDismiss() } // dismiss popup when clicked outside
+                .clickable { onDismiss() }
         )
 
         // Popup Box content
@@ -159,19 +161,19 @@ fun  AddCategoryBox(
                 .wrapContentSize()
                 .background(Color.White, shape = RoundedCornerShape(8.dp))
                 .padding(16.dp)
-                .pointerInput(Unit) {}
+                .pointerInput(Unit) {
+                    // Prevent clicks from propagating to the background
+                    detectTapGestures { }
+                }
         ) {
             Column(
-                modifier = Modifier
-                    .padding(16.dp)
+                modifier = Modifier.padding(16.dp)
             ) {
-                // Title
                 Text(
                     text = "Add Category",
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
-                // Text input field
                 TextField(
                     value = addCategoryInput,
                     onValueChange = { onTextInputChange(it) },
@@ -179,27 +181,130 @@ fun  AddCategoryBox(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Checkbox
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 8.dp)
                 ) {
                     Checkbox(
                         checked = isChecked,
-                        onCheckedChange = { onCheckboxChange(it) }
+                        onCheckedChange = { onCheckboxChecked() }
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("make private")
+                    Text("Make Private")
                 }
 
-                // Confirm Button
+                // Show password field only when checkbox is checked
+                if (isChecked) {
+                    Text(
+                        text = "Enter a Password",
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+
+                    TextField(
+                        value = categoryPassword,
+                        onValueChange = { onPasswordChange(it) },
+                        label = { Text("Password") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 Button(
                     onClick = {
                         onConfirm()
-                        onDismiss() // Optionally dismiss the popup after confirmation
+                        onDismiss()
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = addCategoryInput.isNotBlank() && (!isChecked || categoryPassword.isNotBlank())
                 ) {
                     Text("Confirm")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PasswordPopup(
+    category: Category,
+    password: String,
+    onPasswordChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        // Background overlay
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.5f))
+                .clickable { onDismiss() }
+        )
+
+        // Popup content
+        Box(
+            modifier = Modifier
+                .wrapContentSize()
+                .background(Color.White, shape = RoundedCornerShape(8.dp))
+                .padding(16.dp)
+                .pointerInput(Unit) {
+                    // Prevent clicks from propagating to background
+                    detectTapGestures { }
+                }
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Enter Password",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Text(
+                    text = "Category: ${category.name}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                TextField(
+                    value = password,
+                    onValueChange = onPasswordChange,
+                    label = { Text("Password") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    TextButton(
+                        onClick = onDismiss
+                    ) {
+                        Text("Cancel")
+                    }
+
+                    category.password?.let {
+                        Button(
+                            onClick = onConfirm,
+                            enabled = it.isNotBlank()
+                        ) {
+                            Text("Unlock")
+                        }
+                    }
                 }
             }
         }

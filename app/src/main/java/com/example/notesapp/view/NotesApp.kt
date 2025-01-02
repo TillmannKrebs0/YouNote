@@ -34,42 +34,29 @@ import androidx.compose.ui.unit.dp
 import com.example.notesapp.model.Category
 import com.example.notesapp.viewmodel.CategoryViewModel
 import com.example.notesapp.viewmodel.NotesViewModel
+import com.example.notesapp.viewmodel.ScreenViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewModel) {
+fun NotesApp(
+    categoryViewModel: CategoryViewModel,
+    notesViewModel: NotesViewModel,
+    screenViewModel: ScreenViewModel
+) {
     val noteUiState by notesViewModel.uiState.collectAsState()
     val categoryUiState by categoryViewModel.uiState.collectAsState()
+    val screenState by screenViewModel.uiState.collectAsState()
 
-    val textInput = noteUiState.textInput
     val notes = noteUiState.notes
-    val categories = categoryUiState.categories
-    val categoryInput = categoryUiState.categoryInput
-    val categoryPassword = categoryUiState.categoryPassword
-
-    /// TODO: write own ViewModel for these States
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
-    var inputFieldHeight by remember { mutableStateOf(70.dp) }
-    var filterOpen by remember { mutableStateOf(false) }
-    var noteOptionsOpen by remember { mutableStateOf(false) }
-    var sideBarOpen by remember { mutableStateOf(false) }
-    var addCategoryBoxOpen by remember { mutableStateOf(false) }
-    var showDeleteConfirmation by remember { mutableStateOf(false) }
-    var categoryOptionsOpen by remember { mutableStateOf(false) }
 
-    var askPasswordOpen by remember { mutableStateOf(false) }
-    var passwordInput by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf<Category?>(null) }
-    var pendingDeleteAction by remember { mutableStateOf<(() -> Unit)?>(null) }
-
-    val sidebarWidth = 260.dp // Sidebar width
+    val sidebarWidth = 260.dp
     val maxSidebarOffset = with(LocalDensity.current) { sidebarWidth.toPx() }
     val sidebarOffset = remember { Animatable(-maxSidebarOffset) } // Start hidden
-
 
     LaunchedEffect(notes.size) {
         if (notes.isNotEmpty()) {
@@ -83,7 +70,6 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
             .pointerInput(Unit) {
                 detectHorizontalDragGestures(
                     onHorizontalDrag = { change, dragAmount ->
-                        // Update sidebar position based on drag
                         coroutineScope.launch {
                             val newOffset =
                                 (sidebarOffset.value + dragAmount).coerceIn(-maxSidebarOffset, 0f)
@@ -92,41 +78,28 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
                         change.consume()
                     },
                     onDragEnd = {
-                        // Smoothly animate to open or closed state
                         coroutineScope.launch {
                             if (sidebarOffset.value > -maxSidebarOffset * 0.75) {
-                                // Open the sidebar
-                                sidebarOffset.animateTo(
-                                    0f,
-                                    animationSpec = tween(durationMillis = 300)
-                                )
-                                sideBarOpen = true
+                                sidebarOffset.animateTo(0f, animationSpec = tween(durationMillis = 300))
+                                screenViewModel.toggleSideBar()
                             } else {
-                                // Close the sidebar
-                                sidebarOffset.animateTo(
-                                    -maxSidebarOffset,
-                                    animationSpec = tween(durationMillis = 300)
-                                )
-                                sideBarOpen = false
+                                sidebarOffset.animateTo(-maxSidebarOffset, animationSpec = tween(durationMillis = 300))
+                                screenViewModel.toggleSideBar()
                             }
                         }
                     }
                 )
             }
     ) {
-        // Main content
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp)
-        ) {
+        Box(modifier = Modifier.fillMaxSize().padding(8.dp)) {
             ControlBar(
                 modifier = Modifier.fillMaxWidth(),
                 onTextChange = { notesViewModel.onSearchQueryChanged(it) },
-                onFilterOpen = { filterOpen = !filterOpen },
+                onFilterOpen = { screenViewModel.toggleFilter() },
                 onSideBarOpen = {
                     coroutineScope.launch {
                         sidebarOffset.animateTo(0f, animationSpec = tween(durationMillis = 300))
-                        sideBarOpen = true
+                        screenViewModel.toggleSideBar()
                     }
                 }
             )
@@ -134,69 +107,64 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
             NoteList(
                 listState = listState,
                 notes = notes,
-                onNoteSelected = { note -> notesViewModel.selectNote(note)},
-                onToggleNoteOptions = {noteOptionsOpen = !noteOptionsOpen},
+                onNoteSelected = { note -> notesViewModel.selectNote(note) },
+                onToggleNoteOptions = { screenViewModel.toggleNoteOptions() },
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = inputFieldHeight)
+                    .padding(bottom = screenState.inputFieldHeight)
                     .padding(top = 70.dp)
             )
 
             InputBar(
-                textInput = textInput,
+                textInput = noteUiState.textInput,
                 onTextChange = { notesViewModel.onTextChanged(it) },
                 onPostNote = { notesViewModel.handleNoteAction() },
-                onHeightChanged = { newHeight -> inputFieldHeight = newHeight },
+                onHeightChanged = { newHeight -> screenViewModel.updateInputFieldHeight(newHeight) },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
             )
         }
 
-        // Overlay bottom card above everything
-        if (noteOptionsOpen) {
+        if (screenState.noteOptionsOpen) {
             EditDeleteBottomCard(
                 selectedNote = noteUiState.selectedNote,
                 onEdit = {
-                    noteOptionsOpen = false
+                    screenViewModel.toggleNoteOptions()
                     noteUiState.selectedNote?.let { notesViewModel.onTextChanged(it.content) }
                 },
                 onDelete = {
-                    pendingDeleteAction = {
+                    screenViewModel.setPendingDeleteAction {
                         noteUiState.selectedNote?.let { notesViewModel.deleteNote(it) }
-                        noteOptionsOpen = false
+                        screenViewModel.toggleNoteOptions()
                         notesViewModel.clearSelectedNote()
                     }
-
-                    showDeleteConfirmation = true
+                    screenViewModel.toggleDeleteConfirmation()
                 },
                 onDismiss = {
                     notesViewModel.clearSelectedNote()
-                    noteOptionsOpen = false },
-                onChangeCategory = {/*todo: implement*/},
+                    screenViewModel.toggleNoteOptions()
+                },
+                onChangeCategory = {/* TODO: implement */},
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
         }
 
-        if (filterOpen) {
+        if (screenState.filterOpen) {
             FilterMenu(
                 notesViewModel,
-                onToggleFilter = {filterOpen = !filterOpen}
+                onToggleFilter = { screenViewModel.toggleFilter() }
             )
         }
 
-        // Overlay That closes Sidebar if Tap on Screen beneath
-        if (sideBarOpen) {
+        if (screenState.sideBarOpen) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .clickable {
                         coroutineScope.launch {
-                            sidebarOffset.animateTo(
-                                -maxSidebarOffset,
-                                animationSpec = tween(durationMillis = 300)
-                            )
-                            sideBarOpen = false
+                            sidebarOffset.animateTo(-maxSidebarOffset, animationSpec = tween(durationMillis = 300))
+                            screenViewModel.toggleSideBar()
                         }
                     }
             )
@@ -213,100 +181,94 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
                 )
         ) {
             Sidebar(
-                items = categories,
-                onAddCategory = { addCategoryBoxOpen = true },
+                items = categoryUiState.categories,
+                onAddCategory = { screenViewModel.toggleAddCategoryBox() },
                 onItemClick = { category ->
                     if (category.isSecret) {
-                        selectedCategory = category
-                        askPasswordOpen = true
+                        screenViewModel.selectCategory(category)
+                        screenViewModel.toggleAskPassword()
                     } else {
                         categoryViewModel.setActiveCategory(category)
                         coroutineScope.launch {
                             sidebarOffset.animateTo(-maxSidebarOffset, animationSpec = tween(durationMillis = 300))
-                            sideBarOpen = false
+                            screenViewModel.toggleSideBar()
                         }
                     }
                 },
                 onSideBarClose = {
                     coroutineScope.launch {
                         sidebarOffset.animateTo(-maxSidebarOffset, animationSpec = tween(durationMillis = 300))
-                        sideBarOpen = false
+                        screenViewModel.toggleSideBar()
                     }
                 },
-                onItemLongPress = {
-                    category -> categoryViewModel.selectCategory(category)
-                    categoryOptionsOpen = true
+                onItemLongPress = { category ->
+                    categoryViewModel.selectCategory(category)
+                    screenViewModel.toggleCategoryOptions()
                 }
             )
         }
 
-
-
-        if (askPasswordOpen) {
+        if (screenState.askPasswordOpen) {
             PasswordPopup(
-                category = selectedCategory!!,
-                password = passwordInput,
+                category = screenState.selectedCategory!!,
+                password = screenState.passwordInput,
                 onConfirm = {
-                        categoryViewModel.setActiveCategory(selectedCategory!!)
-                        sideBarOpen = false
-                        askPasswordOpen = false
-                        passwordInput = ""
-                        selectedCategory = null
+                    categoryViewModel.setActiveCategory(screenState.selectedCategory!!)
+                    screenViewModel.toggleSideBar()
+                    screenViewModel.toggleAskPassword()
+                    screenViewModel.updatePasswordInput("")
+                    screenViewModel.selectCategory(null)
                 },
                 onDismiss = {
-                    askPasswordOpen = false
-                    passwordInput = ""
-                    selectedCategory = null
+                    screenViewModel.toggleAskPassword()
+                    screenViewModel.updatePasswordInput("")
+                    screenViewModel.selectCategory(null)
                 },
-                onPasswordChange = { passwordInput = it }
-
+                onPasswordChange = { screenViewModel.updatePasswordInput(it) }
             )
         }
 
-        if (addCategoryBoxOpen) {
+        if (screenState.addCategoryBoxOpen) {
             AddCategoryBox(
-                addCategoryInput = categoryInput,
+                addCategoryInput = categoryUiState.categoryInput,
                 onTextInputChange = { categoryViewModel.onCategoryInputChanged(it) },
-                categoryPassword = categoryPassword,
+                categoryPassword = categoryUiState.categoryPassword,
                 onPasswordChange = { categoryViewModel.onCategoryPasswordChanged(it) },
                 isChecked = categoryUiState.secretFlagSet,
-                onCheckboxChecked = {categoryViewModel.toggleSecretFlag()},
-                onDismiss = { addCategoryBoxOpen = false },
-                onConfirm = { categoryViewModel.addCategory()}
+                onCheckboxChecked = { categoryViewModel.toggleSecretFlag() },
+                onDismiss = { screenViewModel.toggleAddCategoryBox() },
+                onConfirm = { categoryViewModel.addCategory() }
             )
         }
 
-        if (categoryOptionsOpen) {
+        if (screenState.categoryOptionsOpen) {
             DeleteCategory(
                 onDelete = {
-                    pendingDeleteAction = {
+                    screenViewModel.setPendingDeleteAction {
                         categoryUiState.selectedCategory?.let { categoryViewModel.deleteCategory(it) }
                         categoryViewModel.clearSelectedCategory()
-                        categoryOptionsOpen = false
+                        screenViewModel.toggleCategoryOptions()
                     }
-                    showDeleteConfirmation = true
+                    screenViewModel.toggleDeleteConfirmation()
                 },
                 onDismiss = {
                     categoryViewModel.clearSelectedCategory()
-                    categoryOptionsOpen = false
+                    screenViewModel.toggleCategoryOptions()
                 }
             )
         }
 
-        if (showDeleteConfirmation) {
+        if (screenState.showDeleteConfirmation) {
             DeleteConfirmDialog(
                 onConfirm = {
-                    pendingDeleteAction?.invoke()  // Execute the stored delete action
-                    pendingDeleteAction = null
-                    showDeleteConfirmation = false
+                    screenViewModel.executePendingDeleteAction()
+                    screenViewModel.toggleDeleteConfirmation()
                 },
                 onDismiss = {
-                    showDeleteConfirmation = false
-                    pendingDeleteAction = null
+                    screenViewModel.toggleDeleteConfirmation()
+                    screenViewModel.setPendingDeleteAction(null)
                 }
             )
         }
     }
 }
-
-

@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import com.example.notesapp.viewmodel.CategoryViewModel
+import com.example.notesapp.viewmodel.ScreenViewModel
 import com.example.notesapp.viewmodel.ViewModelFactory
 
 
@@ -15,6 +16,7 @@ class MainActivity : ComponentActivity() {
     private val viewModelFactory by lazy { ViewModelFactory(application, this) }
     private val categoryViewModel: CategoryViewModel by viewModels { viewModelFactory }
     private val notesViewModel: NotesViewModel by viewModels { viewModelFactory }
+    private val screenViewModel: ScreenViewModel by viewModels { viewModelFactory }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,7 +24,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             NotesApp(
                 categoryViewModel = categoryViewModel,
-                notesViewModel = notesViewModel
+                notesViewModel = notesViewModel,
+                screenViewModel = screenViewModel
             )
         }
     }

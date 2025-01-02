@@ -27,6 +27,10 @@ class ViewModelFactory(
                 return NotesViewModel(application, noteRepository, categoryViewModel) as T
             }
 
+            modelClass.isAssignableFrom(ScreenViewModel::class.java) -> {
+                return ScreenViewModel() as T
+            }
+
             else -> throw IllegalArgumentException("Unknown ViewModel class")
         }
     }

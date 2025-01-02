@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.SubdirectoryArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -48,6 +49,7 @@ fun EditDeleteBottomCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
+    onChangeCategory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -97,6 +99,17 @@ fun EditDeleteBottomCard(
                     )
                     Text("Delete")
                 }
+                Button(
+                    onClick = onChangeCategory,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SubdirectoryArrowRight,
+                        contentDescription = "Delete",
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text("Change Category")
+                }
             }
         }
     }
@@ -115,7 +128,11 @@ fun NoteItem(
             .padding(8.dp)
     ) {
         Text(
-            text = "Datum: ${note.creationDate}",
+            text = if (note.isEdited) {
+                        "Date: ${note.creationDate} | Edited"
+                    } else {
+                        "Date: ${note.creationDate}"
+                    },
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(bottom = 4.dp)
         )
@@ -136,7 +153,7 @@ fun NoteItem(
             )
         ) {
             Text(
-                text = "Inhalt: ${note.content} | Cat: ${note.categoryId}",
+                text = note.content,
                 modifier = Modifier.padding(16.dp),
                 style = MaterialTheme.typography.bodyMedium
             )

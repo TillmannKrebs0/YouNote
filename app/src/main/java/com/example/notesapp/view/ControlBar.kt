@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -29,6 +30,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.input.pointer.pointerInput
 import com.example.notesapp.viewmodel.NotesViewModel
@@ -59,7 +61,8 @@ fun ControlBar(
                 search = it
                 onTextChange(it)
             },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f),
             singleLine = true,
             placeholder = { Text("Serch for Note") }
         )
@@ -82,6 +85,10 @@ fun FilterMenu(
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var currentDateOperation by remember { mutableStateOf<DateOperation>(DateOperation.None) }
+    val noteUiState by viewModel.uiState.collectAsState()
+
+    val showOldestFirst = noteUiState.showOldestFirst
+    val onlyShowEdited = noteUiState.onlyShowEdited
 
     Box(
         modifier = Modifier
@@ -93,49 +100,76 @@ fun FilterMenu(
     ) {
         Card(
             modifier = Modifier
-                .padding(top = 70.dp, end = 16.dp) // Adjust position relative to the filter button
+                .padding(top = 65.dp, end = 8.dp) // Adjust position relative to the filter button
                 .width(200.dp) // Set width of the card
         ) {
-            Column(modifier = Modifier.padding(8.dp)) {
-                Button(onClick = {
-                    viewModel.toggleShowOldestFirst()
-                    onToggleFilter()
+            Column(modifier = Modifier
+                .padding(8.dp)
+            ) {
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        viewModel.toggleShowOldestFirst()
+                        onToggleFilter()
                 }) {
-                    Text(text = "Show Oldest First") //todo: change depending on state
+                    Text(
+                        text = if (showOldestFirst) {
+                            "Show Newest First"
+                        } else {
+                            "Show Oldest First"
+                        }
+                    )
                 }
-                Button(onClick = {
-                    viewModel.toggleShowEdited()
-                    onToggleFilter()
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        viewModel.toggleShowEdited()
+                        onToggleFilter()
                 }) {
-                    Text(text = "Toggle edited") //todo: change depending on state
-                }
-
-                Button(onClick = {
-                    currentDateOperation = DateOperation.OnDate
-                    showDatePicker = true
-                }) {
-                    Text(text = "Show Notes on specific Date")
-                }
-
-                Button(onClick = {
-                    currentDateOperation = DateOperation.Before
-                    showDatePicker = true
-                }) {
-                    Text(text = "Show Notes BEFORE Date")
-                }
-
-                Button(onClick = {
-                    currentDateOperation = DateOperation.After
-                    showDatePicker = true
-                }) {
-                    Text(text = "Show Notes AFTER Date")
+                    Text(text =
+                        if (onlyShowEdited) {
+                            "Edited & Unedited"
+                        } else {
+                            "Edited Notes"
+                        }
+                    )
                 }
 
+                // TODO: Add color indication if following states are active
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        currentDateOperation = DateOperation.OnDate
+                        showDatePicker = true
+                }) {
+                    Text(text = "Show on Date")
+                }
+
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        currentDateOperation = DateOperation.Before
+                        showDatePicker = true
+                }) {
+                    Text(text = "Show until Date")
+                }
+
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        currentDateOperation = DateOperation.After
+                        showDatePicker = true
+                }) {
+                    Text(text = "Show after Date")
+                }
 
 
-                HorizontalDivider(thickness = 1.dp)
 
-                Button(onClick = { viewModel.resetFilters() }) {
+                HorizontalDivider(thickness = 2.dp, modifier = Modifier.padding(vertical = 4.dp))
+
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { viewModel.resetFilters() }) {
                     Text(text = "Remove all Filters")
                 }
 

@@ -2,11 +2,20 @@ package com.example.notesapp.view
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -17,11 +26,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.notesapp.model.Category
 import com.example.notesapp.viewmodel.CategoryViewModel
 import com.example.notesapp.viewmodel.NotesViewModel
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -44,11 +58,17 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
     var noteOptionsOpen by remember { mutableStateOf(false) }
     var sideBarOpen by remember { mutableStateOf(false) }
     var addCategoryBoxOpen by remember { mutableStateOf(false) }
-    var deleteConfirmOpen by remember { mutableStateOf(false) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var categoryOptionsOpen by remember { mutableStateOf(false) }
 
     var askPasswordOpen by remember { mutableStateOf(false) }
     var passwordInput by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
+    var pendingDeleteAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    val sidebarWidth = 260.dp // Sidebar width
+    val maxSidebarOffset = with(LocalDensity.current) { sidebarWidth.toPx() }
+    val sidebarOffset = remember { Animatable(-maxSidebarOffset) } // Start hidden
 
 
     LaunchedEffect(notes.size) {
@@ -60,17 +80,55 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onHorizontalDrag = { change, dragAmount ->
+                        // Update sidebar position based on drag
+                        coroutineScope.launch {
+                            val newOffset =
+                                (sidebarOffset.value + dragAmount).coerceIn(-maxSidebarOffset, 0f)
+                            sidebarOffset.snapTo(newOffset)
+                        }
+                        change.consume()
+                    },
+                    onDragEnd = {
+                        // Smoothly animate to open or closed state
+                        coroutineScope.launch {
+                            if (sidebarOffset.value > -maxSidebarOffset * 0.75) {
+                                // Open the sidebar
+                                sidebarOffset.animateTo(
+                                    0f,
+                                    animationSpec = tween(durationMillis = 300)
+                                )
+                                sideBarOpen = true
+                            } else {
+                                // Close the sidebar
+                                sidebarOffset.animateTo(
+                                    -maxSidebarOffset,
+                                    animationSpec = tween(durationMillis = 300)
+                                )
+                                sideBarOpen = false
+                            }
+                        }
+                    }
+                )
+            }
     ) {
         // Main content
         Box(modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(8.dp)
         ) {
             ControlBar(
                 modifier = Modifier.fillMaxWidth(),
                 onTextChange = { notesViewModel.onSearchQueryChanged(it) },
                 onFilterOpen = { filterOpen = !filterOpen },
-                onSideBarOpen = { sideBarOpen = !sideBarOpen}
+                onSideBarOpen = {
+                    coroutineScope.launch {
+                        sidebarOffset.animateTo(0f, animationSpec = tween(durationMillis = 300))
+                        sideBarOpen = true
+                    }
+                }
             )
 
             NoteList(
@@ -104,13 +162,18 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
                     noteUiState.selectedNote?.let { notesViewModel.onTextChanged(it.content) }
                 },
                 onDelete = {
-                    noteUiState.selectedNote?.let { notesViewModel.deleteNote(it) }
-                    noteOptionsOpen = false
-                    notesViewModel.clearSelectedNote()
+                    pendingDeleteAction = {
+                        noteUiState.selectedNote?.let { notesViewModel.deleteNote(it) }
+                        noteOptionsOpen = false
+                        notesViewModel.clearSelectedNote()
+                    }
+
+                    showDeleteConfirmation = true
                 },
                 onDismiss = {
                     notesViewModel.clearSelectedNote()
                     noteOptionsOpen = false },
+                onChangeCategory = {/*todo: implement*/},
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
         }
@@ -121,24 +184,62 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
                 onToggleFilter = {filterOpen = !filterOpen}
             )
         }
+
+        // Overlay That closes Sidebar if Tap on Screen beneath
         if (sideBarOpen) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable {
+                        coroutineScope.launch {
+                            sidebarOffset.animateTo(
+                                -maxSidebarOffset,
+                                animationSpec = tween(durationMillis = 300)
+                            )
+                            sideBarOpen = false
+                        }
+                    }
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .offset { IntOffset(sidebarOffset.value.roundToInt(), 0) }
+                .width(sidebarWidth)
+                .fillMaxSize()
+                .background(
+                    MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(8.dp)
+                )
+        ) {
             Sidebar(
                 items = categories,
-                onAddCategory = {
-                    addCategoryBoxOpen = true
-                },
+                onAddCategory = { addCategoryBoxOpen = true },
                 onItemClick = { category ->
                     if (category.isSecret) {
                         selectedCategory = category
                         askPasswordOpen = true
                     } else {
                         categoryViewModel.setActiveCategory(category)
+                        coroutineScope.launch {
+                            sidebarOffset.animateTo(-maxSidebarOffset, animationSpec = tween(durationMillis = 300))
+                            sideBarOpen = false
+                        }
+                    }
+                },
+                onSideBarClose = {
+                    coroutineScope.launch {
+                        sidebarOffset.animateTo(-maxSidebarOffset, animationSpec = tween(durationMillis = 300))
                         sideBarOpen = false
                     }
                 },
-                onSideBarClose = { sideBarOpen = false } ,
+                onItemLongPress = {
+                    category -> categoryViewModel.selectCategory(category)
+                    categoryOptionsOpen = true
+                }
             )
         }
+
 
 
         if (askPasswordOpen) {
@@ -146,13 +247,11 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
                 category = selectedCategory!!,
                 password = passwordInput,
                 onConfirm = {
-                    if (passwordInput == selectedCategory?.password) {
-                        selectedCategory?.let { categoryViewModel.setActiveCategory(it) }
+                        categoryViewModel.setActiveCategory(selectedCategory!!)
                         sideBarOpen = false
                         askPasswordOpen = false
                         passwordInput = ""
                         selectedCategory = null
-                    }
                 },
                 onDismiss = {
                     askPasswordOpen = false
@@ -174,6 +273,37 @@ fun NotesApp(categoryViewModel: CategoryViewModel, notesViewModel: NotesViewMode
                 onCheckboxChecked = {categoryViewModel.toggleSecretFlag()},
                 onDismiss = { addCategoryBoxOpen = false },
                 onConfirm = { categoryViewModel.addCategory()}
+            )
+        }
+
+        if (categoryOptionsOpen) {
+            DeleteCategory(
+                onDelete = {
+                    pendingDeleteAction = {
+                        categoryUiState.selectedCategory?.let { categoryViewModel.deleteCategory(it) }
+                        categoryViewModel.clearSelectedCategory()
+                        categoryOptionsOpen = false
+                    }
+                    showDeleteConfirmation = true
+                },
+                onDismiss = {
+                    categoryViewModel.clearSelectedCategory()
+                    categoryOptionsOpen = false
+                }
+            )
+        }
+
+        if (showDeleteConfirmation) {
+            DeleteConfirmDialog(
+                onConfirm = {
+                    pendingDeleteAction?.invoke()  // Execute the stored delete action
+                    pendingDeleteAction = null
+                    showDeleteConfirmation = false
+                },
+                onDismiss = {
+                    showDeleteConfirmation = false
+                    pendingDeleteAction = null
+                }
             )
         }
     }

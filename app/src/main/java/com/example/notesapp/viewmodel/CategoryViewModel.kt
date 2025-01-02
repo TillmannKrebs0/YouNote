@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.notesapp.data.CategoryRepository
 import com.example.notesapp.model.Category
+import com.example.notesapp.model.Note
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -16,7 +17,8 @@ data class CategoriesUiState(
     val activeCategory: Category? = null,
     val categoryInput: String = "",
     val secretFlagSet: Boolean = false,
-    val categoryPassword: String = ""
+    val categoryPassword: String = "",
+    val selectedCategory: Category? = null
 ) {
 
 }
@@ -77,6 +79,21 @@ class CategoryViewModel(
             }
             loadCategories()
             _uiState.value = _uiState.value.copy(categoryInput = "")
+        }
+    }
+
+    fun selectCategory(category: Category?) {
+        _uiState.value = _uiState.value.copy(selectedCategory = category)
+    }
+
+    fun clearSelectedCategory() {
+        _uiState.value = _uiState.value.copy(selectedCategory = null)
+    }
+
+    fun deleteCategory(category: Category) {
+        viewModelScope.launch {
+            categoryRepository.delete(category)
+            loadCategories()
         }
     }
 }

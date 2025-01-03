@@ -32,7 +32,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.notesapp.model.Category
+import com.example.notesapp.viewmodel.CategoriesUiState
 import com.example.notesapp.viewmodel.CategoryViewModel
+import com.example.notesapp.viewmodel.NotesScreenState
+import com.example.notesapp.viewmodel.NotesUiState
 import com.example.notesapp.viewmodel.NotesViewModel
 import com.example.notesapp.viewmodel.ScreenViewModel
 import kotlinx.coroutines.launch
@@ -126,37 +129,6 @@ fun NotesApp(
             )
         }
 
-        if (screenState.noteOptionsOpen) {
-            EditDeleteBottomCard(
-                selectedNote = noteUiState.selectedNote,
-                onEdit = {
-                    screenViewModel.toggleNoteOptions()
-                    noteUiState.selectedNote?.let { notesViewModel.onTextChanged(it.content) }
-                },
-                onDelete = {
-                    screenViewModel.setPendingDeleteAction {
-                        noteUiState.selectedNote?.let { notesViewModel.deleteNote(it) }
-                        screenViewModel.toggleNoteOptions()
-                        notesViewModel.clearSelectedNote()
-                    }
-                    screenViewModel.toggleDeleteConfirmation()
-                },
-                onDismiss = {
-                    notesViewModel.clearSelectedNote()
-                    screenViewModel.toggleNoteOptions()
-                },
-                onChangeCategory = {/* TODO: implement */},
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
-        }
-
-        if (screenState.filterOpen) {
-            FilterMenu(
-                notesViewModel,
-                onToggleFilter = { screenViewModel.toggleFilter() }
-            )
-        }
-
         if (screenState.sideBarOpen) {
             Box(
                 modifier = Modifier
@@ -208,67 +180,15 @@ fun NotesApp(
             )
         }
 
-        if (screenState.askPasswordOpen) {
-            PasswordPopup(
-                category = screenState.selectedCategory!!,
-                password = screenState.passwordInput,
-                onConfirm = {
-                    categoryViewModel.setActiveCategory(screenState.selectedCategory!!)
-                    screenViewModel.toggleSideBar()
-                    screenViewModel.toggleAskPassword()
-                    screenViewModel.updatePasswordInput("")
-                    screenViewModel.selectCategory(null)
-                },
-                onDismiss = {
-                    screenViewModel.toggleAskPassword()
-                    screenViewModel.updatePasswordInput("")
-                    screenViewModel.selectCategory(null)
-                },
-                onPasswordChange = { screenViewModel.updatePasswordInput(it) }
-            )
-        }
 
-        if (screenState.addCategoryBoxOpen) {
-            AddCategoryBox(
-                addCategoryInput = categoryUiState.categoryInput,
-                onTextInputChange = { categoryViewModel.onCategoryInputChanged(it) },
-                categoryPassword = categoryUiState.categoryPassword,
-                onPasswordChange = { categoryViewModel.onCategoryPasswordChanged(it) },
-                isChecked = categoryUiState.secretFlagSet,
-                onCheckboxChecked = { categoryViewModel.toggleSecretFlag() },
-                onDismiss = { screenViewModel.toggleAddCategoryBox() },
-                onConfirm = { categoryViewModel.addCategory() }
-            )
-        }
-
-        if (screenState.categoryOptionsOpen) {
-            DeleteCategory(
-                onDelete = {
-                    screenViewModel.setPendingDeleteAction {
-                        categoryUiState.selectedCategory?.let { categoryViewModel.deleteCategory(it) }
-                        categoryViewModel.clearSelectedCategory()
-                        screenViewModel.toggleCategoryOptions()
-                    }
-                    screenViewModel.toggleDeleteConfirmation()
-                },
-                onDismiss = {
-                    categoryViewModel.clearSelectedCategory()
-                    screenViewModel.toggleCategoryOptions()
-                }
-            )
-        }
-
-        if (screenState.showDeleteConfirmation) {
-            DeleteConfirmDialog(
-                onConfirm = {
-                    screenViewModel.executePendingDeleteAction()
-                    screenViewModel.toggleDeleteConfirmation()
-                },
-                onDismiss = {
-                    screenViewModel.toggleDeleteConfirmation()
-                    screenViewModel.setPendingDeleteAction(null)
-                }
-            )
-        }
+        DialogHandler(
+            screenState,
+            noteUiState,
+            screenViewModel,
+            notesViewModel,
+            categoryViewModel,
+            categoryUiState
+        )
     }
 }
+

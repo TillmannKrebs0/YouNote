@@ -5,15 +5,12 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.notesapp.data.CategoryRepository
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.example.notesapp.model.Note
 import com.example.notesapp.data.NoteRepository
 import com.example.notesapp.model.Category
-import com.example.notesapp.data.YouNoteDatabase
-import kotlinx.coroutines.flow.first
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

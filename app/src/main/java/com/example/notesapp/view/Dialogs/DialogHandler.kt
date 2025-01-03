@@ -1,8 +1,14 @@
-package com.example.notesapp.view
+package com.example.notesapp.view.Dialogs
 
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
+import com.example.notesapp.view.Dialogs.Components.AddCategoryBox
+import com.example.notesapp.view.Dialogs.Components.DeleteCategory
+import com.example.notesapp.view.Dialogs.Components.DeleteConfirmDialog
+import com.example.notesapp.view.Dialogs.Components.EditDeleteBottomCard
+import com.example.notesapp.view.Dialogs.Components.FilterMenu
+import com.example.notesapp.view.Dialogs.Components.PasswordPopup
 import com.example.notesapp.viewmodel.CategoriesUiState
 import com.example.notesapp.viewmodel.CategoryViewModel
 import com.example.notesapp.viewmodel.NotesScreenState

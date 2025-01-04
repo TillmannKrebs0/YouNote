@@ -3,12 +3,14 @@ package com.example.notesapp.view.MainLayout
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -20,8 +22,10 @@ import com.example.notesapp.view.MainLayout.Components.ControlBar
 import com.example.notesapp.view.MainLayout.Components.InputBar
 import com.example.notesapp.view.MainLayout.Components.NoteList
 import com.example.notesapp.view.CategoryMenu.SidebarConfiguration
+import com.example.notesapp.viewmodel.CategoryViewModel
 import com.example.notesapp.viewmodel.NotesScreenState
 import com.example.notesapp.viewmodel.NotesUiState
+import com.example.notesapp.viewmodel.CategoriesUiState
 import com.example.notesapp.viewmodel.NotesViewModel
 import com.example.notesapp.viewmodel.ScreenViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -51,7 +55,10 @@ fun NotesAppLayout(
     content: @Composable () -> Unit
 ) {
     Box(
-        modifier = modifier.then(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .then(
             Modifier.pointerInput(Unit) {
                 detectHorizontalDragGestures(
                     onHorizontalDrag = { change, dragAmount ->
@@ -93,11 +100,11 @@ fun NotesMainContent(
     notesViewModel: NotesViewModel,
     screenViewModel: ScreenViewModel,
     sidebarConfig: SidebarConfiguration,
-    coroutineScope: CoroutineScope
+    coroutineScope: CoroutineScope,
+    categoryUiState: CategoriesUiState
 ) {
     Box(modifier = Modifier.fillMaxSize().padding(8.dp)) {
         ControlBar(
-            modifier = Modifier.fillMaxWidth(),
             onTextChange = { notesViewModel.onSearchQueryChanged(it) },
             onFilterOpen = { screenViewModel.toggleFilter() },
             onSideBarOpen = {
@@ -108,7 +115,7 @@ fun NotesMainContent(
                     )
                     screenViewModel.toggleSideBar()
                 }
-            }
+            },
         )
 
         NoteList(
@@ -119,7 +126,8 @@ fun NotesMainContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(bottom = screenState.inputFieldHeight)
-                .padding(top = 70.dp)
+                .padding(top = 70.dp),
+            notesUiState = noteUiState
         )
 
         InputBar(
@@ -127,6 +135,7 @@ fun NotesMainContent(
             onTextChange = { notesViewModel.onTextChanged(it) },
             onPostNote = { notesViewModel.handleNoteAction() },
             onHeightChanged = { newHeight -> screenViewModel.updateInputFieldHeight(newHeight) },
+            categoriesUiState = categoryUiState,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()

@@ -25,6 +25,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -39,6 +40,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.notesapp.model.Category
+import com.example.notesapp.viewmodel.CategoriesUiState
 
 @Composable
 fun Sidebar(
@@ -47,7 +49,8 @@ fun Sidebar(
     onItemClick: (Category) -> Unit,
     onSideBarClose: () -> Unit,
     modifier: Modifier = Modifier,
-    onItemLongPress: (Category) -> Unit
+    onItemLongPress: (Category) -> Unit,
+    categoryUiState: CategoriesUiState
 ) {
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
@@ -64,6 +67,7 @@ fun Sidebar(
                 .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .animateContentSize()
+                .background(MaterialTheme.colorScheme.secondary)
                 .pointerInput(Unit) { detectTapGestures { } }
         ) {
             Column(
@@ -73,10 +77,12 @@ fun Sidebar(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
                         .padding(16.dp)
                 ) {
                     Text(
                         text = "Categories" ,
+                        color = MaterialTheme.colorScheme.onSurface,
                         style = TextStyle(fontSize = 26.sp),
                         modifier = Modifier
                             .padding(8.dp)
@@ -84,16 +90,19 @@ fun Sidebar(
 
                     IconButton(
                         onClick = { onSideBarClose() },
-                        modifier = Modifier.align(Alignment.TopEnd)
+                        modifier = Modifier.align(Alignment.TopEnd),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                        )
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.ArrowBackIosNew,
-                            contentDescription = "close Categories view"
+                            contentDescription = "close Categories view",
                         )
                     }
                 }
 
-                HorizontalDivider(Modifier.height(2.dp))
+                HorizontalDivider(Modifier.height(2.dp).background(MaterialTheme.colorScheme.onSurface))
 
                 // Add Item button
                 Button(
@@ -118,7 +127,8 @@ fun Sidebar(
                         SidebarItem(
                             category = item,
                             onClick = { onItemClick(item) },
-                            onLongPress = { onItemLongPress(item) }
+                            onLongPress = { onItemLongPress(item) },
+                            categoryUiState = categoryUiState
                         )
                     }
                 }
@@ -133,8 +143,10 @@ private fun SidebarItem(
     category: Category,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onLongPress: (Category) -> Unit
+    onLongPress: (Category) -> Unit,
+    categoryUiState: CategoriesUiState
 ) {
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -144,8 +156,11 @@ private fun SidebarItem(
                 onClick = onClick,
                 onLongClick = { onLongPress(category) }
             ),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp
+        color = if (categoryUiState.activeCategory == category) {
+            MaterialTheme.colorScheme.tertiary // Highlight color
+        } else {
+            MaterialTheme.colorScheme.surface // Default color
+        }
     ) {
         Row(
             modifier = Modifier
@@ -157,14 +172,16 @@ private fun SidebarItem(
                 Icon(
                     imageVector = Icons.Default.Lock,
                     contentDescription = "locked",
-                    modifier = Modifier.padding(end = 8.dp)
+                    modifier = Modifier.padding(end = 8.dp),
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             } else
             {
                 Icon(
                     imageVector = Icons.Default.LockOpen,
                     contentDescription = "locked",
-                    modifier = Modifier.padding(end = 8.dp).graphicsLayer(alpha = 1f) // change to 0f if want to change to transparent
+                    modifier = Modifier.padding(end = 8.dp).graphicsLayer(alpha = 1f), // change to 0f if want to change to transparent
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
             Text(

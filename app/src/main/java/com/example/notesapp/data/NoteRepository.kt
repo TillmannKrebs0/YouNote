@@ -56,7 +56,7 @@ class NoteRepository(private val noteDao: NoteDao) {
         beforeDate: String?,
         afterDate: String?,
         onDate: String?): List<Note> {
-            val sortOrder = if (showOldestFirst) "ASC" else "DESC"
+            val sortOrder = if (showOldestFirst) "DESC" else "ASC"
             return withContext(Dispatchers.IO) {
                 noteDao.getNotesByFilters(
                     categoryID = categoryID,

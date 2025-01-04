@@ -14,6 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import com.example.notesapp.ui.theme.NotesAppTheme
 import com.example.notesapp.view.CategoryMenu.CategoryMenu
 import com.example.notesapp.view.CategoryMenu.rememberSidebarConfiguration
 import com.example.notesapp.view.Dialogs.DialogHandler
@@ -35,11 +36,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            NotesApp(
-                categoryViewModel = categoryViewModel,
-                notesViewModel = notesViewModel,
-                screenViewModel = screenViewModel
-            )
+            NotesAppTheme {
+                NotesApp(
+                    categoryViewModel = categoryViewModel,
+                    notesViewModel = notesViewModel,
+                    screenViewModel = screenViewModel
+                )
+            }
         }
     }
 }
@@ -78,6 +81,7 @@ fun NotesApp(
             screenViewModel = screenViewModel,
             sidebarConfig = sidebarConfig,
             coroutineScope = coroutineScope,
+            categoryUiState = categoryUiState,
         )
         CategoryMenu(
             screenState = screenState,

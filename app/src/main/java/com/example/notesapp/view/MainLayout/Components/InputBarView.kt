@@ -9,7 +9,9 @@ import androidx.compose.material.icons.rounded.Send
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -18,15 +20,16 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.notesapp.viewmodel.CategoriesUiState
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InputBar(
     textInput: String,
     onTextChange: (String) -> Unit,
     onPostNote: () -> Unit,
     onHeightChanged: (Dp) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    categoriesUiState: CategoriesUiState
 ) {
     val density = LocalDensity.current
 
@@ -48,7 +51,20 @@ fun InputBar(
                 .weight(1f),
             singleLine = false,
             maxLines = 10,
-            placeholder = { Text("Write a Note...") },
+            placeholder = { Text("Write Note in ${categoriesUiState.activeCategory?.name}") },
+            colors = OutlinedTextFieldDefaults.colors(
+                // Container (background) colors
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+
+                // Text colors
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+
+                // Placeholder text color
+                focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            )
 
         )
 

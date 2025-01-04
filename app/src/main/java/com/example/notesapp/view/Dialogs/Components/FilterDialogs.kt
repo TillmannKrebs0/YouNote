@@ -8,11 +8,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -48,10 +52,18 @@ fun FilterMenu(
             },
         contentAlignment = Alignment.TopEnd // Align dropdown to top-right
     ) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.32f),
+        ) {}
+
         Card(
             modifier = Modifier
                 .padding(top = 65.dp, end = 8.dp) // Adjust position relative to the filter button
-                .width(200.dp) // Set width of the card
+                .width(200.dp), // Set width of the card
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondary
+            )
         ) {
             Column(modifier = Modifier
                 .padding(8.dp)
@@ -61,7 +73,12 @@ fun FilterMenu(
                     onClick = {
                         viewModel.toggleShowOldestFirst()
                         onToggleFilter()
-                    }) {
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surface, // Background color
+                        contentColor = MaterialTheme.colorScheme.primary // Text/Icon color
+                    )
+                ) {
                     Text(
                         text = if (showOldestFirst) {
                             "Show Newest First"
@@ -75,7 +92,12 @@ fun FilterMenu(
                     onClick = {
                         viewModel.toggleShowEdited()
                         onToggleFilter()
-                    }) {
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surface, // Background color
+                        contentColor = MaterialTheme.colorScheme.primary // Text/Icon color
+                    )
+                ) {
                     Text(text =
                     if (onlyShowEdited) {
                         "Edited & Unedited"
@@ -91,7 +113,12 @@ fun FilterMenu(
                     onClick = {
                         currentDateOperation = DateOperation.OnDate
                         showDatePicker = true
-                    }) {
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surface, // Background color
+                        contentColor = MaterialTheme.colorScheme.primary // Text/Icon color
+                    )
+                ) {
                     Text(text = "Show on Date")
                 }
 
@@ -100,7 +127,12 @@ fun FilterMenu(
                     onClick = {
                         currentDateOperation = DateOperation.Before
                         showDatePicker = true
-                    }) {
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surface, // Background color
+                        contentColor = MaterialTheme.colorScheme.primary // Text/Icon color
+                    )
+                ) {
                     Text(text = "Show until Date")
                 }
 
@@ -109,13 +141,21 @@ fun FilterMenu(
                     onClick = {
                         currentDateOperation = DateOperation.After
                         showDatePicker = true
-                    }) {
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surface, // Background color
+                        contentColor = MaterialTheme.colorScheme.primary // Text/Icon color
+                    )
+                ) {
                     Text(text = "Show after Date")
                 }
 
-
-
-                HorizontalDivider(thickness = 2.dp, modifier = Modifier.padding(vertical = 4.dp))
+//
+//                HorizontalDivider(
+//                    thickness = 2.dp,
+//                    modifier = Modifier.padding(vertical = 4.dp),
+//                    color = MaterialTheme.colorScheme.onSurface
+//                )
 
                 Button(
                     modifier = Modifier.fillMaxWidth(),

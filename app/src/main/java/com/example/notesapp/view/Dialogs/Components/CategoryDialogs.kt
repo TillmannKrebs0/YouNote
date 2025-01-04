@@ -19,11 +19,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -69,7 +71,7 @@ fun AddCategoryBox(
         Box(
             modifier = Modifier
                 .wrapContentSize()
-                .background(Color.White, shape = RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.secondary, shape = RoundedCornerShape(8.dp))
                 .padding(16.dp)
                 .pointerInput(Unit) {
                     detectTapGestures { } // Prevent clicks from propagating to the background
@@ -80,14 +82,28 @@ fun AddCategoryBox(
             ) {
                 Text(
                     text = "Add Category",
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    modifier = Modifier.padding(bottom = 8.dp),
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 TextField(
                     value = addCategoryInput,
                     onValueChange = { onTextInputChange(it) },
                     label = { Text("Enter Name") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        // Container (background) colors
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+
+                        // Text colors
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+
+                        // Placeholder text color
+                        focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
                 )
 
                 Row(
@@ -99,14 +115,17 @@ fun AddCategoryBox(
                         onCheckedChange = { onCheckboxChecked() }
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Make Private")
+                    Text(
+                        "Make Private",
+                        color = MaterialTheme.colorScheme.onSurface)
                 }
 
                 // Show password fields only when checkbox is checked
                 if (isChecked) {
                     Text(
-                        text = "Enter a Password",
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        text = "Enter a Password:",
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     TextField(
@@ -116,12 +135,26 @@ fun AddCategoryBox(
                         },
                         label = { Text("Password") },
                         visualTransformation = PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            // Container (background) colors
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+
+                            // Text colors
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+
+                            // Placeholder text color
+                            focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
                     )
 
                     Text(
-                        text = "Confirm Password",
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        text = "Confirm Password:",
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     TextField(
@@ -132,7 +165,23 @@ fun AddCategoryBox(
                         label = { Text("Confirm Password") },
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
-                        isError = !passwordsMatch
+                        isError = !passwordsMatch,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            // Container (background) colors
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                            errorContainerColor = MaterialTheme.colorScheme.surface, // Ensure consistency in error state
+
+                            // Text colors
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            errorTextColor = MaterialTheme.colorScheme.onSurface, // Error text color matches normal state
+
+                            // Placeholder text color
+                            focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            errorPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) // Error placeholder consistency
+                        )
                     )
 
                     if (!passwordsMatch) {
@@ -195,7 +244,10 @@ fun DeleteCategory(
                 .fillMaxWidth()
                 .wrapContentHeight()
                 .padding(16.dp),
-            elevation = CardDefaults.cardElevation(8.dp)
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondary
+            )
+
         ) {
             Column(
                 modifier = Modifier
@@ -209,6 +261,10 @@ fun DeleteCategory(
                     onClick = {
                         onDelete()
                     },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error, // Background color
+                        contentColor = MaterialTheme.colorScheme.onSurface // Text/Icon color
+                    )
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,

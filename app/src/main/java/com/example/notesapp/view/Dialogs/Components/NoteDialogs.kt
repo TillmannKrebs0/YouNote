@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.SubdirectoryArrowRight
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -53,7 +54,9 @@ fun EditDeleteBottomCard(
                 .wrapContentHeight()
                 .padding(16.dp)
                 .align(Alignment.BottomCenter),
-            elevation = CardDefaults.cardElevation(8.dp)
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondary
+            )
         ) {
             Column(
                 modifier = Modifier
@@ -63,7 +66,11 @@ fun EditDeleteBottomCard(
             ) {
                 Button(
                     onClick = onEdit,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surface, // Background color
+                        contentColor = MaterialTheme.colorScheme.primary // Text/Icon color
+                    )
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
@@ -72,20 +79,15 @@ fun EditDeleteBottomCard(
                     )
                     Text("Edit")
                 }
-                Button(
-                    onClick = onDelete,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-                    Text("Delete")
-                }
+
+                //todo: Implement
                 Button(
                     onClick = onChangeCategory,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surface, // Background color
+                        contentColor = MaterialTheme.colorScheme.primary // Text/Icon color
+                    )
                 ) {
                     Icon(
                         imageVector = Icons.Default.SubdirectoryArrowRight,
@@ -93,6 +95,22 @@ fun EditDeleteBottomCard(
                         modifier = Modifier.padding(end = 8.dp)
                     )
                     Text("Change Category")
+                }
+
+                Button(
+                    onClick = onDelete,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error, // Background color
+                        contentColor = MaterialTheme.colorScheme.onSurface // Text/Icon color
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete",
+                        modifier = Modifier.padding(end = 8.dp),
+                    )
+                    Text("Delete")
                 }
             }
         }

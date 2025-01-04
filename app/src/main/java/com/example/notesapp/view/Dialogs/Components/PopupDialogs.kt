@@ -16,6 +16,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -50,7 +51,8 @@ fun DeleteConfirmDialog(
         text = {
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         },
         confirmButton = {
@@ -102,8 +104,8 @@ fun PasswordPopup(
         Box(
             modifier = Modifier
                 .wrapContentSize()
-                .background(Color.White, shape = RoundedCornerShape(8.dp))
                 .padding(16.dp)
+                .background(color = MaterialTheme.colorScheme.secondary, shape = RoundedCornerShape(8.dp))
                 .pointerInput(Unit) {
                     // Prevent clicks from propagating to background
                     detectTapGestures { }
@@ -117,26 +119,42 @@ fun PasswordPopup(
                 Text(
                     text = "Enter Password",
                     style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    modifier = Modifier.padding(bottom = 8.dp),
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Text(
                     text = "Category: ${category.name}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
+
+
 
                 TextField(
                     value = password,
                     onValueChange = onPasswordChange,
-                    label = { Text("Password") },
+                    label = { Text("Enter Password") },
                     visualTransformation = PasswordVisualTransformation(),
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    isError = !passwordsMatch
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = !passwordsMatch,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        // Container (background) colors
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        errorContainerColor = MaterialTheme.colorScheme.surface, // Ensure consistency in error state
+
+                        // Text colors
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        errorTextColor = MaterialTheme.colorScheme.onSurface, // Error text color matches normal state
+
+                        // Placeholder text color
+                        focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        errorPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) // Error placeholder consistency
+                    )
                 )
 
                 if (!passwordsMatch) {

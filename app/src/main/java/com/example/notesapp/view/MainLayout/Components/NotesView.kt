@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.example.notesapp.model.Note
+import com.example.notesapp.viewmodel.NotesUiState
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -21,7 +22,8 @@ fun NoteList(
     notes: List<Note>,
     onNoteSelected: (Note) -> Unit,
     onToggleNoteOptions: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    notesUiState: NotesUiState
 ) {
     LazyColumn(
         state = listState,
@@ -33,7 +35,8 @@ fun NoteList(
                 onLongPress = {
                     onNoteSelected(currentNote)
                     onToggleNoteOptions()
-                }
+                },
+                notesUiState = notesUiState
             )
         }
     }
@@ -44,7 +47,8 @@ fun NoteList(
 fun NoteItem(
     note: Note,
     onLongPress: (Note) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    notesUiState: NotesUiState
 ) {
     Column(
         modifier = Modifier
@@ -58,7 +62,8 @@ fun NoteItem(
                         "Date: ${note.creationDate}"
                     },
             style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(bottom = 4.dp)
+            modifier = Modifier.padding(bottom = 4.dp),
+            color = MaterialTheme.colorScheme.onBackground
         )
         Card(
             modifier = Modifier
@@ -70,16 +75,20 @@ fun NoteItem(
                         onLongPress = { onLongPress(note) }
                     )
                 },
-            elevation = CardDefaults.cardElevation(8.dp),
             shape = MaterialTheme.shapes.medium,
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = if (note == notesUiState.selectedNote) {
+                    MaterialTheme.colorScheme.tertiary
+                } else {
+                    MaterialTheme.colorScheme.surface
+                }
             )
         ) {
             Text(
                 text = note.content,
                 modifier = Modifier.padding(16.dp),
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }

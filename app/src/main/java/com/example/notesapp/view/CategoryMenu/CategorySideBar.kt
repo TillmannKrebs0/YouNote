@@ -57,21 +57,24 @@ fun CategoryMenu(
     categoryUiState: CategoriesUiState,
     categoryViewModel: CategoryViewModel
 ) {
-    if (screenState.sideBarOpen) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable {
-                    coroutineScope.launch {
-                        sidebarConfig.offset.animateTo(
-                            -sidebarConfig.maxOffset,
-                            animationSpec = tween(durationMillis = 300)
-                        )
-                        screenViewModel.toggleSideBar()
-                    }
-                }
-        )
-    }
+
+    // Removed CloseOnOutsidePress for now as it causes issues if the close action is performed if
+    // the opening is canceled leading to false state,todo: fix
+//    if (screenState.sideBarOpen) {
+//        Box(
+//            modifier = Modifier
+//                .fillMaxSize()
+//                .clickable {
+//                    coroutineScope.launch {
+//                        sidebarConfig.offset.animateTo(
+//                            -sidebarConfig.maxOffset,
+//                            animationSpec = tween(durationMillis = 300)
+//                        )
+//                        screenViewModel.toggleSideBar()
+//                    }
+//                }
+//        )
+//    }
 
     Box(
         modifier = Modifier
@@ -85,6 +88,7 @@ fun CategoryMenu(
     ) {
         Sidebar(
             items = categoryUiState.categories,
+            categoryUiState = categoryUiState,
             onAddCategory = { screenViewModel.toggleAddCategoryBox() },
             onItemClick = { category ->
                 if (category.isSecret) {

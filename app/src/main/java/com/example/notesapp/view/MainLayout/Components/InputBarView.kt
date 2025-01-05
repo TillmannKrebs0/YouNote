@@ -22,6 +22,17 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.notesapp.viewmodel.CategoriesUiState
 
+/**
+ * A composable input bar for creating new notes.
+ * Features a multi-line text field and a send button.
+ * Dynamically updates its height and displays the active category.
+ *
+ * @param textInput Current text input value
+ * @param onTextChange Callback for text input changes
+ * @param onPostNote Callback triggered when send button is pressed
+ * @param onHeightChanged Callback to notify parent of height changes for layout adjustments
+ * @param categoriesUiState Current UI state containing active category information
+ */
 @Composable
 fun InputBar(
     textInput: String,
@@ -38,7 +49,6 @@ fun InputBar(
             .padding(vertical = 8.dp)
             .onSizeChanged { size ->
                 with(density) {
-                    // Convert height to dp and add some padding
                     onHeightChanged(size.height.toDp() + 16.dp)
                 }
             },
@@ -53,15 +63,12 @@ fun InputBar(
             maxLines = 10,
             placeholder = { Text("Write Note in ${categoriesUiState.activeCategory?.name}") },
             colors = OutlinedTextFieldDefaults.colors(
-                // Container (background) colors
                 focusedContainerColor = MaterialTheme.colorScheme.surface,
                 unfocusedContainerColor = MaterialTheme.colorScheme.surface,
 
-                // Text colors
                 focusedTextColor = MaterialTheme.colorScheme.onSurface,
                 unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
 
-                // Placeholder text color
                 focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )

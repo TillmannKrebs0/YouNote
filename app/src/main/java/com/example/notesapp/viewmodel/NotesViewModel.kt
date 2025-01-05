@@ -15,6 +15,21 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/**
+ * Represents the UI state for notes functionality.
+ * Manages the list of notes, user inputs, filters, and selection state.
+ *
+ * @property notes Current list of notes to display
+ * @property textInput Current text in the note input field
+ * @property searchQuery Current search filter text
+ * @property selectedNote Currently selected note for editing
+ * @property showOldestFirst Controls sort order of notes
+ * @property onlyShowEdited Filter to show only edited notes
+ * @property showNotesAtDate Filter notes for specific date
+ * @property showNotesAfterDate Filter notes after specific date
+ * @property showNotesBeforeDate Filter notes before specific date
+ */
+
 data class NotesUiState(
     val notes: List<Note> = emptyList(),
     val textInput: String = "",
@@ -27,6 +42,11 @@ data class NotesUiState(
     val showNotesBeforeDate:  String? = null
 )
 
+/**
+ * ViewModel responsible for managing notes data and operations.
+ * Handles note creation, updates, deletion, filtering, and search functionality.
+ * Coordinates with CategoryViewModel to load notes for the active category.
+ */
 class NotesViewModel(
     application: Application,
     private val noteRepository: NoteRepository,
@@ -48,6 +68,10 @@ class NotesViewModel(
         }
     }
 
+    /**
+     * Loads notes for given category applying current filters.
+     * Called when category changes or filters are updated.
+     */
     private fun loadNotesForCategory(category: Category) {
         viewModelScope.launch {
             val state = _uiState.value
@@ -96,6 +120,11 @@ class NotesViewModel(
         }
     }
 
+    /**
+     * Note management functions for creating, updating, and deleting notes
+     */
+
+    // decides if a new Note is to be created or an exiisting one to be edited depending on if theres a selected note
     @RequiresApi(Build.VERSION_CODES.O)
     fun handleNoteAction() {
         val currentState = _uiState.value
@@ -167,6 +196,9 @@ class NotesViewModel(
         reloadNotes()
     }
 
+    /**
+     * Filter and search functions
+     */
     fun filterByDate(selectedDate: Long) {
         val date = Date(selectedDate)
         val formattedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(date)

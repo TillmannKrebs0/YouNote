@@ -31,6 +31,13 @@ import com.example.notesapp.viewmodel.ScreenViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+/**
+ * Handles scrolling to the last note in the list when the notes list size changes.
+ *
+ * @param notes List of notes to display.
+ * @param listState State object for controlling list scrolling.
+ * @param coroutineScope Scope for launching coroutines.
+ */
 @Composable
 fun HandleNotesScrolling(
     notes: List<Note>,
@@ -91,6 +98,18 @@ fun NotesAppLayout(
     }
 }
 
+/**
+ * Main content area of the Notes app, including the control bar, note list, and input bar.
+ *
+ * @param noteUiState State of the notes UI, including the list of notes and user input.
+ * @param screenState State of the screen, including UI component visibility and dimensions.
+ * @param listState State object for controlling note list scrolling.
+ * @param notesViewModel ViewModel for managing notes-related actions and state.
+ * @param screenViewModel ViewModel for managing screen-related state and actions.
+ * @param sidebarConfig Configuration for the sidebar's offset and behavior.
+ * @param coroutineScope Scope for managing coroutine-based actions.
+ * @param categoryUiState State of the category UI.
+ */
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NotesMainContent(
@@ -104,6 +123,7 @@ fun NotesMainContent(
     categoryUiState: CategoriesUiState
 ) {
     Box(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+        // Control bar at the top of the screen for search, filter and navigation.
         ControlBar(
             onTextChange = { notesViewModel.onSearchQueryChanged(it) },
             onFilterOpen = { screenViewModel.toggleFilter() },
@@ -118,6 +138,7 @@ fun NotesMainContent(
             },
         )
 
+        // List of notes displayed in the main content area.
         NoteList(
             listState = listState,
             notes = noteUiState.notes,
@@ -130,6 +151,7 @@ fun NotesMainContent(
             notesUiState = noteUiState
         )
 
+        // Input bar at the bottom of the screen for adding new notes.
         InputBar(
             textInput = noteUiState.textInput,
             onTextChange = { notesViewModel.onTextChanged(it) },

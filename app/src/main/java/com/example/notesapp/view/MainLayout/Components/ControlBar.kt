@@ -26,6 +26,15 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import com.example.notesapp.viewmodel.CategoriesUiState
 import com.example.notesapp.viewmodel.CategoryViewModel
 
+/**
+ * A control bar composable that provides navigation and search functionality.
+ * Features a side menu button, search field with clear option, and filter button.
+ * The search field maintains its own state and notifies parent of changes.
+ *
+ * @param onTextChange Callback triggered when search text changes
+ * @param onFilterOpen Callback to open the filter dialog/menu
+ * @param onSideBarOpen Callback to open the side navigation menu
+ */
 @Composable
 fun ControlBar(
     onTextChange: (String) -> Unit,
@@ -54,8 +63,7 @@ fun ControlBar(
             modifier = Modifier
                 .weight(1f)
                 .heightIn(max = 56.dp),  // Add this line
-            singleLine = true,
-            placeholder = { Text("Search for Note...") },
+            placeholder = { Text("Search..") },
             trailingIcon = {
                 if (search.isNotEmpty()) {
                     IconButton(onClick = {

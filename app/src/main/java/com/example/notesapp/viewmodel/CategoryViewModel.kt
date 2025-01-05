@@ -11,6 +11,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+/**
+ * Represents the UI state for category management.
+ * Manages the list of categories, active selection, and category creation inputs.
+ *
+ * @property categories List of all available categories
+ * @property activeCategory Currently selected category for viewing notes
+ * @property categoryInput Text input for creating new categories
+ * @property secretFlagSet Whether the new category should be password protected
+ * @property categoryPassword Password input for protected categories
+ * @property selectedCategory Category selected for operations (e.g., deletion)
+ */
+
 data class CategoriesUiState(
     val categories: List<Category> = emptyList(),
     val activeCategory: Category? = null,
@@ -22,6 +34,11 @@ data class CategoriesUiState(
 
 }
 
+/**
+ * ViewModel responsible for managing categories.
+ * Handles category creation, deletion, selection, and password protection.
+ * Maintains the active category for note display and manages the list of all categories.
+ */
 class CategoryViewModel(
     application: Application,
     private val categoryRepository: CategoryRepository
@@ -34,6 +51,10 @@ class CategoryViewModel(
         loadCategories()
     }
 
+    /**
+     * Loads all categories and maintains the active selection.
+     * If no category is active, selects the first available category.
+     */
     private fun loadCategories() {
         viewModelScope.launch {
             val categories = categoryRepository.getAllCategories()
@@ -44,6 +65,9 @@ class CategoryViewModel(
         }
     }
 
+    /**
+     * Input handling functions for category creation
+     */
     fun onCategoryInputChanged(text: String) {
         _uiState.value = _uiState.value.copy(categoryInput = text)
     }
@@ -52,14 +76,14 @@ class CategoryViewModel(
         _uiState.value = _uiState.value.copy(categoryPassword = text)
     }
 
-    fun setActiveCategory(category: Category) {
-        _uiState.value = _uiState.value.copy(activeCategory = category)
-    }
-
     fun toggleSecretFlag() {
         _uiState.value = _uiState.value.copy(secretFlagSet = !_uiState.value.secretFlagSet)
     }
 
+    /**
+     * Creates a new category with optional password protection.
+     * Clears input fields and reloads categories after creation.
+     */
     @RequiresApi(Build.VERSION_CODES.O)
     fun addCategory() {
         val currentState = _uiState.value
@@ -79,6 +103,13 @@ class CategoryViewModel(
             loadCategories()
             _uiState.value = _uiState.value.copy(categoryInput = "")
         }
+    }
+
+    /**
+     * Category selection and management functions
+     */
+    fun setActiveCategory(category: Category) {
+        _uiState.value = _uiState.value.copy(activeCategory = category)
     }
 
     fun selectCategory(category: Category?) {

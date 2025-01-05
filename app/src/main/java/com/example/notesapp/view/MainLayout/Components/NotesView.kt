@@ -15,6 +15,16 @@ import androidx.compose.ui.unit.dp
 import com.example.notesapp.model.Note
 import com.example.notesapp.viewmodel.NotesUiState
 
+/**
+ * A composable that displays a scrollable list of notes using LazyColumn.
+ * Handles note selection and option toggles through callbacks.
+ *
+ * @param listState Controls the scroll state of the list
+ * @param notes List of notes to display
+ * @param onNoteSelected Callback triggered when a note is selected
+ * @param onToggleNoteOptions Callback to show/hide note options menu
+ * @param notesUiState Current UI state containing selected note information
+ */
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NoteList(
@@ -42,6 +52,16 @@ fun NoteList(
     }
 }
 
+/**
+ * A composable that renders an individual note card.
+ * Displays creation date, edited status, and note content.
+ * Supports long press interaction for note selection.
+ * Visual feedback is provided through different background colors for selected state.
+ *
+ * @param note The note to be displayed
+ * @param onLongPress Callback triggered on long press gesture
+ * @param notesUiState Current UI state containing selected note information
+ */
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NoteItem(

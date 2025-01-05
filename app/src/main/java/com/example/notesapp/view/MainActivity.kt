@@ -25,7 +25,9 @@ import com.example.notesapp.view.MainLayout.HandleNotesScrolling
 import com.example.notesapp.view.MainLayout.NotesAppLayout
 import com.example.notesapp.view.MainLayout.NotesMainContent
 
-
+/**
+ * Main activity of the Notes app, responsible for initializing view models and setting up the UI.
+ */
 class MainActivity : ComponentActivity() {
     private val viewModelFactory by lazy { ViewModelFactory(application, this) }
     private val categoryViewModel: CategoryViewModel by viewModels { viewModelFactory }
@@ -47,6 +49,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/**
+ * Composable function for the main Notes app UI.
+ *
+ * @param categoryViewModel ViewModel for managing category-related state.
+ * @param notesViewModel ViewModel for managing notes-related state.
+ * @param screenViewModel ViewModel for managing screen navigation and UI state.
+ */
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NotesApp(
@@ -54,25 +63,28 @@ fun NotesApp(
     notesViewModel: NotesViewModel,
     screenViewModel: ScreenViewModel
 ) {
+    // Collecting UI states from ViewModels.
     val noteUiState by notesViewModel.uiState.collectAsState()
     val categoryUiState by categoryViewModel.uiState.collectAsState()
     val screenState by screenViewModel.uiState.collectAsState()
 
+    // State and coroutine scope for managing scrolling and sidebar.
     val notes = noteUiState.notes
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
-
-
     val sidebarConfig = rememberSidebarConfiguration()
 
+    // Handle scroll actions and synchronization.
     HandleNotesScrolling(notes, listState, coroutineScope)
 
+    // Layout of the app
     NotesAppLayout(
         modifier = Modifier.fillMaxSize(),
         sidebarConfig = sidebarConfig,
         coroutineScope = coroutineScope,
         screenViewModel = screenViewModel
     ) {
+        // Renders the main View, consisting of Control Bar, Notes and Input Bar
         NotesMainContent(
             noteUiState = noteUiState,
             screenState = screenState,
@@ -83,6 +95,7 @@ fun NotesApp(
             coroutineScope = coroutineScope,
             categoryUiState = categoryUiState,
         )
+        // Render The Category Menu
         CategoryMenu(
             screenState = screenState,
             coroutineScope = coroutineScope,
@@ -92,6 +105,7 @@ fun NotesApp(
             categoryViewModel = categoryViewModel
         )
 
+        // Handle any active Dialogs
         DialogHandler(
             screenState = screenState,
             noteUiState = noteUiState,
